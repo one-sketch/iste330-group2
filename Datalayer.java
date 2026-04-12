@@ -307,7 +307,7 @@ public class Datalayer {
         catch (SQLException e) {
             e.printStackTrace();
         }
-        return new ArrayList<>();
+        return matchedFaculty;
     }
 
     // Public/Guest: search both faculty and students by one keyword 
