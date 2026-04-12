@@ -282,7 +282,31 @@ public class Datalayer {
 
     // Student: auto-match faculty who share interests 
     public List<Faculty> matchFacultyByStudentInterest(int studentId) throws SQLException {
-        // TODO: Match faculty with student interests
+        List<Faculty> matchedFaculty = new ArrayList<>();
+
+        String sql = " SELECT DISTINCT faculty.fname, faculty.lname, faculty.building, faculty.office_number, faculty.email" + 
+            " FROM faculty" + 
+            " JOIN faculty_interest USING (faculty_id)" + 
+            " JOIN student_interest USING (interest_id)" + 
+            " WHERE student_interest.student_id = ?";
+        
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, studentId);
+            System.out.println("Executing SQL: " + stmt);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String fname = rs.getString("fname");
+                String lname = rs.getString("lname");
+                int building = rs.getInt("building");
+                String office = rs.getString("office_number");
+                String email = rs.getString("email");
+                matchedFaculty.add(new Faculty(-1, -1, fname, lname, email, building, office, null, null, null, null));
+            }
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
         return new ArrayList<>();
     }
 
