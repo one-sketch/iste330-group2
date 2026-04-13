@@ -3,18 +3,23 @@
 // Date: april 10 2026
 // SKELETON VERSION 
 
-import java.sql.*;
-//used for the sha 256 hasing
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Datalayer {
 
     private Connection conn;
+    private String sql; 
     private String dbUrl;
     private String dbUser;
     private String dbPass;
+    private Statement stmt;
+    private PreparedStatement pstmt;
 
     public Datalayer(String dbName, String user, String password) {
         // TODO: Initialize connection parameters
@@ -216,12 +221,46 @@ public class Datalayer {
         return -1;
     }
 
-    public void updateAbstract(int abstractId, String title, String abstractType, String content) throws SQLException {
-        // TODO: Update existing abstract
+    public int updateAbstract(int abstractId, String title, String abstractType, String content) throws SQLException {
+        int abstracts_updated = 0;
+        sql = "UPDATE abstract SET title = ?, abstract_type = ?, abstract_content = ? WHERE abstract_id = ?";
+
+        try {
+            pstmt = conn.prepareStatement(sql); 
+            pstmt.setString(1, title);
+            pstmt.setString(2, abstractType);
+            pstmt.setString(3, content);
+            pstmt.setInt(4, abstractId);
+            pstmt.executeUpdate();
+            abstracts_updated = 1;
+        } catch(SQLException e){
+            System.out.println("Error in updateAbstract: " + e.getMessage());
+        }
+        return abstracts_updated;
     }
 
-    public void deleteAbstract(int facultyId, int abstractId) throws SQLException {
-        // TODO: Delete abstract
+    public int deleteAbstract(int facultyId, int abstractId) throws SQLException {
+        int abstracts_deleted = 0;
+        String deleteLink = "DELETE FROM faculty_abstract WHERE faculty_id = ?, abstract_id = ? ";
+        String deleteAbstract = "DELETE FROM abstract WHERE abstract_id = ?";
+
+        try {
+            pstmt = conn.prepareStatement(deleteLink); 
+            PreparedStatement pstmt2 = conn.prepareStatement(deleteAbstract);
+
+            pstmt.setInt(1, facultyId);
+            pstmt.setInt(2, abstractId);
+            pstmt.executeUpdate();
+
+
+            pstmt2.setInt(1, abstractId);
+            pstmt2.executeUpdate();
+
+            abstracts_deleted = 1;
+        } catch(SQLException e){
+            System.out.println("Error in deleteAbstract: " + e.getMessage());
+        }
+        return abstracts_deleted;
     }
 
     // INTERESTS — Faculty
@@ -230,12 +269,55 @@ public class Datalayer {
         return new ArrayList<>();
     }
 
-    public void setFacultyInterests(int facultyId, List<String> words) throws SQLException {
-        // TODO: Set/replace faculty interests
+    public int addFacultyInterest(int facultyId, List<String> words) throws SQLException {
+        int interests_added = 0; 
+        sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
+        String sqlInsert = "INSERT INTO faculty_interest (faculty_id, interest_id) VALUES (?,?) ";
+
+        try { 
+            pstmt = conn.prepareStatement(sql);
+            PreparedStatement psInsert = conn.prepareStatement(sqlInsert);
+            
+            for (String word : words){
+                pstmt.setString(1, word);
+                ResultSet rs = pstmt.executeQuery();
+                
+                if (rs.next()){
+                    int interestId = rs.getInt("interest_id");
+
+                    psInsert.setInt(1, facultyId); 
+                    psInsert.setInt(2, interestId);
+
+                    try {
+                        psInsert.executeUpdate();
+                        interests_added += 1;
+                    } catch (SQLException e2) {
+                        System.out.println("Error in executeUpdate in addFacultyInterest: " + e2.getMessage());
+                    }
+                }
+            }
+        } catch(SQLException e){
+            System.out.println("Error in addFacultyInterest: " + e.getMessage());
+        }
+        return interests_added;
     }
 
-    public void deleteFacultyInterest(int facultyId, int interestId) throws SQLException {
-        // TODO: Delete specific faculty interest
+    public int deleteFacultyInterest(int facultyId, int interestId) throws SQLException {
+        int interests_deleted = 0;
+        sql = "DELETE FROM faculty_interest WHERE faculty_id = ? AND interest_id = ?";
+
+        try {
+            pstmt = conn.prepareStatement(sql); 
+
+            pstmt.setInt(1, facultyId);
+            pstmt.setInt(2, interestId);
+            pstmt.executeUpdate();
+
+            interests_deleted = 1;
+        } catch(SQLException e){
+            System.out.println("Error in deleteFacultyInterest: " + e.getMessage());
+        }
+        return interests_deleted;
     }
 
     // INTERESTS — Student
@@ -244,14 +326,106 @@ public class Datalayer {
         return new ArrayList<>();
     }
 
-    public void setStudentInterests(int studentId, List<String> words) throws SQLException {
-        // TODO: Set/replace student interests
+    public int addStudentInterest(int studentId, List<String> words) throws SQLException {
+        int interests_added = 0; 
+        sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
+        String sqlInsert = "INSERT INTO student_interest (student_id, interest_id) VALUES (?,?) ";
+
+        try { 
+            pstmt = conn.prepareStatement(sql);
+            PreparedStatement psInsert = conn.prepareStatement(sqlInsert);
+            
+            for (String word : words){
+                pstmt.setString(1, word);
+                ResultSet rs = pstmt.executeQuery();
+                
+                if (rs.next()){
+                    int interestId = rs.getInt("interest_id");
+
+                    psInsert.setInt(1, studentId); 
+                    psInsert.setInt(2, interestId);
+
+                    try {
+                        psInsert.executeUpdate();
+                        interests_added += 1;
+                    } catch (SQLException e2) {
+                        System.out.println("Error in executeUpdate in addStudentInterest: " + e2.getMessage());
+                    }
+                }
+            }
+        } catch(SQLException e){
+            System.out.println("Error in addStudentInterest: " + e.getMessage());
+        }
+        return interests_added;
     }
 
-    public void deleteStudentInterest(int studentId, int interestId) throws SQLException {
-        // TODO: Delete specific student interest
+    public int deleteStudentInterest(int studentId, int interestId) throws SQLException {
+        int interests_deleted = 0;
+        sql = "DELETE FROM student_interest WHERE student_id = ? AND interest_id = ?";
+
+        try {
+            pstmt = conn.prepareStatement(sql); 
+
+            pstmt.setInt(1, studentId);
+            pstmt.setInt(2, interestId);
+            pstmt.executeUpdate();
+
+            interests_deleted = 1;
+        } catch(SQLException e){
+            System.out.println("Error in deleteStudentInterest: " + e.getMessage());
+        }
+        return interests_deleted;
+    }
+    public int addGuestInterest(int guestId, List<String> words) throws SQLException {
+        int interests_added = 0; 
+        sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
+        String sqlInsert = "INSERT INTO guest_interest (guest_id, interest_id) VALUES (?,?) ";
+
+        try { 
+            pstmt = conn.prepareStatement(sql);
+            PreparedStatement psInsert = conn.prepareStatement(sqlInsert);
+            
+            for (String word : words){
+                pstmt.setString(1, word);
+                ResultSet rs = pstmt.executeQuery();
+                
+                if (rs.next()){
+                    int interestId = rs.getInt("interest_id");
+
+                    psInsert.setInt(1, guestId); 
+                    psInsert.setInt(2, interestId);
+
+                    try {
+                        psInsert.executeUpdate();
+                        interests_added += 1;
+                    } catch (SQLException e2) {
+                        System.out.println("Error in executeUpdate in addGuestInterest: " + e2.getMessage());
+                    }
+                }
+            }
+        } catch(SQLException e){
+            System.out.println("Error in addGuestInterest: " + e.getMessage());
+        }
+        return interests_added;
     }
 
+    public int deleteGuestInterest(int guestId, int interestId) throws SQLException {
+        int interests_deleted = 0;
+        sql = "DELETE FROM guest_interest WHERE guest_id = ? AND interest_id = ?";
+
+        try {
+            pstmt = conn.prepareStatement(sql); 
+
+            pstmt.setInt(1, guestId);
+            pstmt.setInt(2, interestId);
+            pstmt.executeUpdate();
+
+            interests_deleted = 1;
+        } catch(SQLException e){
+            System.out.println("Error in deleteGuestInterest: " + e.getMessage());
+        }
+        return interests_deleted;
+    }
     // SEARCH & MATCHING 
     // Faculty: search students by interest keyword
     public List<Student> searchStudentsByInterest(String keyword) throws SQLException {
@@ -284,17 +458,17 @@ public class Datalayer {
     public List<Faculty> matchFacultyByStudentInterest(int studentId) throws SQLException {
         List<Faculty> matchedFaculty = new ArrayList<>();
 
-        String sql = " SELECT DISTINCT faculty.fname, faculty.lname, faculty.building, faculty.office_number, faculty.email" + 
+        sql = " SELECT DISTINCT faculty.fname, faculty.lname, faculty.building, faculty.office_number, faculty.email" + 
             " FROM faculty" + 
             " JOIN faculty_interest USING (faculty_id)" + 
             " JOIN student_interest USING (interest_id)" + 
             " WHERE student_interest.student_id = ?";
         
         try {
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, studentId);
-            System.out.println("Executing SQL: " + stmt);
-            ResultSet rs = stmt.executeQuery();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, studentId);
+            System.out.println("Executing SQL: " + pstmt);
+            ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 String fname = rs.getString("fname");
                 String lname = rs.getString("lname");
