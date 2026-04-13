@@ -134,8 +134,8 @@ CREATE TABLE Faculty_Abstract (
     abstract_id INT NOT NULL,
     faculty_id  INT NOT NULL,
     PRIMARY KEY (abstract_id, faculty_id),
-    FOREIGN KEY (abstract_id) REFERENCES abstract(abstract_id),
-    FOREIGN KEY (faculty_id)  REFERENCES Faculty(faculty_id)
+    FOREIGN KEY (abstract_id) REFERENCES abstract(abstract_id) ON DELETE CASCADE,
+    FOREIGN KEY (faculty_id)  REFERENCES Faculty(faculty_id) ON DELETE CASCADE
 );
 
 -- Insert statement for faculty_abstract table sample data
@@ -178,8 +178,8 @@ CREATE TABLE Faculty_interest (
     faculty_id  INT NOT NULL,
     interest_id INT NOT NULL,
     PRIMARY KEY (faculty_id, interest_id),
-    FOREIGN KEY (faculty_id)  REFERENCES Faculty(faculty_id),
-    FOREIGN KEY (interest_id) REFERENCES Interest(interest_id)
+    FOREIGN KEY (faculty_id)  REFERENCES Faculty(faculty_id) ON DELETE CASCADE,
+    FOREIGN KEY (interest_id) REFERENCES Interest(interest_id) ON DELETE CASCADE
 );
 
 -- Insert statement for faculty_interest table sample data
@@ -194,8 +194,8 @@ CREATE TABLE Student_Interest (
     student_id  INT NOT NULL,
     interest_id INT NOT NULL,
     PRIMARY KEY (student_id, interest_id),
-    FOREIGN KEY (student_id)  REFERENCES Student(student_id),
-    FOREIGN KEY (interest_id) REFERENCES Interest(interest_id)
+    FOREIGN KEY (student_id)  REFERENCES Student(student_id) ON DELETE CASCADE,
+    FOREIGN KEY (interest_id) REFERENCES Interest(interest_id) ON DELETE CASCADE
 );
 
 -- Insert statement for student_interest table sample data
@@ -214,8 +214,8 @@ CREATE TABLE Guest_Interest (
     guest_id    INT NOT NULL,
     interest_id INT NOT NULL,
     PRIMARY KEY (guest_id, interest_id),
-    FOREIGN KEY (guest_id)    REFERENCES Guest(guest_id),
-    FOREIGN KEY (interest_id) REFERENCES Interest(interest_id)
+    FOREIGN KEY (guest_id)    REFERENCES Guest(guest_id) ON DELETE CASCADE,
+    FOREIGN KEY (interest_id) REFERENCES Interest(interest_id) ON DELETE CASCADE
 );
 
 -- Insert statement for guest_interest table sample data
@@ -261,8 +261,8 @@ CREATE TABLE College_Major (
     college_id VARCHAR(20) NOT NULL,
     major_id   INT         NOT NULL,
     PRIMARY KEY (college_id, major_id),
-    FOREIGN KEY (college_id) REFERENCES CollegeName_Lookup(college_id),
-    FOREIGN KEY (major_id) REFERENCES major(major_id)
+    FOREIGN KEY (college_id) REFERENCES CollegeName_Lookup(college_id) ON DELETE CASCADE,
+    FOREIGN KEY (major_id) REFERENCES major(major_id) ON DELETE CASCADE
 );
 
 -- Insert statement for college_major table sample data
@@ -289,8 +289,8 @@ CREATE TABLE student_major (
     student_id INT NOT NULL,
     major_id   INT NOT NULL,
     PRIMARY KEY (student_id, major_id),
-    FOREIGN KEY (student_id) REFERENCES Student(student_id),
-    FOREIGN KEY (major_id) REFERENCES major(major_id)
+    FOREIGN KEY (student_id) REFERENCES Student(student_id) ON DELETE CASCADE,
+    FOREIGN KEY (major_id) REFERENCES major(major_id) ON DELETE CASCADE
 );
 
 -- Insert statement for student_major table sample data
