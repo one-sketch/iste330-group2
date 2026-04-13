@@ -149,8 +149,15 @@ public class Datalayer {
      * login with sha-256 hashed password comparison.
      * returns the Account if credentials match, null otherwise.
      */
-    public Account login(String username, String password) throws SQLException {
-        // TODO: Implement login authentication
+   public Account login(String username, String password) throws SQLException {
+        String hashed = hashPassword(password);
+        String sql = "SELECT account_id, username, account_type FROM Account WHERE username=? AND pass_hash=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, hashed);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return new Account(rs.getInt("account_id"), rs.getString("username"), rs.getString("account_type"));
+        }
         return null;
     }
 
@@ -159,32 +166,64 @@ public class Datalayer {
      * Returns the new account_id, or -1 if username already exists.
      */
     public int registerAccount(String username, String password, String accountType) throws SQLException {
-        // TODO: Create new account
+        // Check duplicate
+        String check = "SELECT account_id FROM Account WHERE username=?";
+        try (PreparedStatement ps = conn.prepareStatement(check)) {
+            ps.setString(1, username);
+            if (ps.executeQuery().next()) return -1;
+        }
+        String hashed = hashPassword(password);
+        String sql = "INSERT INTO Account (username, pass_hash, account_type) VALUES (?,?,?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, username); ps.setString(2, hashed); ps.setString(3, accountType);
+            ps.executeUpdate();
+            ResultSet keys = ps.getGeneratedKeys();
+            if (keys.next()) return keys.getInt(1);
+        }
         return -1;
     }
 
-    // Register a new Faculty (creates Account + Faculty row) 
+    /** Register a new Faculty (creates Account + Faculty row) */
     public boolean registerFaculty(String username, String password, String fname, String lname,
                                     String email, int building, String officeNumber) throws SQLException {
-        // TODO: Register faculty member
-        return false;
+        int accountId = registerAccount(username, password, "Faculty");
+        if (accountId == -1) return false;
+        String sql = "INSERT INTO Faculty (account_id, fname, lname, email, building, office_number) VALUES (?,?,?,?,?,?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId); ps.setString(2, fname); ps.setString(3, lname);
+            ps.setString(4, email);  ps.setInt(5, building); ps.setString(6, officeNumber);
+            ps.executeUpdate();
+        }
+        return true;
     }
 
-    // Register a new Student 
+    /** Register a new Student */
     public boolean registerStudent(String username, String password, String fname, String lname,
                                     String email, String phone) throws SQLException {
-        // TODO: Register student
-        return false;
+        int accountId = registerAccount(username, password, "Student");
+        if (accountId == -1) return false;
+        String sql = "INSERT INTO Student (account_id, fname, lname, email, phone) VALUES (?,?,?,?,?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId); ps.setString(2, fname); ps.setString(3, lname);
+            ps.setString(4, email);  ps.setString(5, phone);
+            ps.executeUpdate();
+        }
+        return true;
     }
 
-    // Register a new Guest 
-    // Public user
+    /** Register a new Guest / Public user */
     public boolean registerGuest(String username, String password, String fname, String lname,
                                   String companyName, String email) throws SQLException {
-        // TODO: Register guest
-        return false;
+        int accountId = registerAccount(username, password, "Public");
+        if (accountId == -1) return false;
+        String sql = "INSERT INTO Guest (account_id, fname, lname, company_name, email) VALUES (?,?,?,?,?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId); ps.setString(2, fname); ps.setString(3, lname);
+            ps.setString(4, companyName); ps.setString(5, email);
+            ps.executeUpdate();
+        }
+        return true;
     }
-
     // PROFILE GETTERS
     public Faculty getFacultyByAccount(int accountId) throws SQLException {
         // TODO: Retrieve faculty by account ID
@@ -202,15 +241,26 @@ public class Datalayer {
     }
 
     // ABSTRACTS — Faculty 
-    public List<Abstract> getAllAbstracts() throws SQLException {
-        // TODO: Retrieve all abstracts from all faculty
-        return new ArrayList<>();
+   public List<Abstract> getAllAbstracts() throws SQLException {
+        List<Abstract> list = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM abstract ORDER BY abstract_id")) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(mapAbstract(rs));
+        }
+        return list;
     }
 
-    public List<Abstract> getAbstractsByFaculty(int facultyId) throws SQLException {
-        // TODO: Retrieve abstracts for a specific faculty
-        return new ArrayList<>();
+     public List<Abstract> getAbstractsByFaculty(int facultyId) throws SQLException {
+        List<Abstract> list = new ArrayList<>();
+        String sql = "SELECT a.* FROM abstract a JOIN Faculty_Abstract fa ON a.abstract_id=fa.abstract_id WHERE fa.faculty_id=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, facultyId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(mapAbstract(rs));
+        }
+        return list;
     }
+
 
     /**
      * Insert abstract from file content or typed text.
@@ -265,8 +315,14 @@ public class Datalayer {
 
     // INTERESTS — Faculty
     public List<Interest> getFacultyInterests(int facultyId) throws SQLException {
-        // TODO: Retrieve faculty interests
-        return new ArrayList<>();
+        List<Interest> list = new ArrayList<>();
+        String sql = "SELECT i.* FROM Interest i JOIN Faculty_interest fi ON i.interest_id=fi.interest_id WHERE fi.faculty_id=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, facultyId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(new Interest(rs.getInt("interest_id"), rs.getString("interest_word")));
+        }
+        return list;
     }
 
     public int addFacultyInterest(int facultyId, List<String> words) throws SQLException {
@@ -435,8 +491,15 @@ public class Datalayer {
 
     // Faculty: search students by name 
     public List<Student> searchStudentsByName(String name) throws SQLException {
-        // TODO: Search students by name
-        return new ArrayList<>();
+        List<Student> list = new ArrayList<>();
+        String sql = "SELECT * FROM Student WHERE LOWER(fname) LIKE ? OR LOWER(lname) LIKE ? OR LOWER(CONCAT(fname,' ',lname)) LIKE ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            String q = "%" + name.toLowerCase() + "%";
+            ps.setString(1, q); ps.setString(2, q); ps.setString(3, q);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(mapStudent(rs));
+        }
+        return list;
     }
 
     // Faculty: auto-match students who share interests 
@@ -484,21 +547,29 @@ public class Datalayer {
         return matchedFaculty;
     }
 
-    // Public/Guest: search both faculty and students by one keyword 
+   /** Public/Guest: search both faculty and students by one keyword */
     public List<Faculty> searchFacultyForPublic(String keyword) throws SQLException {
-        // TODO: Search faculty for guest users
-        return new ArrayList<>();
+        return searchFacultyByKeyword(keyword);
     }
 
     public List<Student> searchStudentsForPublic(String keyword) throws SQLException {
-        // TODO: Search students for guest users
-        return new ArrayList<>();
+        return searchStudentsByInterest(keyword);
     }
 
     // HELPERS METHODS
     public int getOrCreateInterest(String word) throws SQLException {
-        // TODO: Get existing interest ID or create new interest
-        return -1;
+        try (PreparedStatement ps = conn.prepareStatement("SELECT interest_id FROM Interest WHERE interest_word=?")) {
+            ps.setString(1, word);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("interest_id");
+        }
+        try (PreparedStatement ps = conn.prepareStatement(
+                "INSERT INTO Interest (interest_word) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, word); ps.executeUpdate();
+            ResultSet keys = ps.getGeneratedKeys();
+            if (keys.next()) return keys.getInt(1);
+        }
+        throw new SQLException("Could not create interest: " + word);
     }
 
     // validate that a keyword is 1-3 words 
