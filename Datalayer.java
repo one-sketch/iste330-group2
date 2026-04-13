@@ -14,12 +14,10 @@ import java.util.List;
 public class Datalayer {
 
     private Connection conn;
-    private String sql; 
     private String dbUrl;
     private String dbUser;
     private String dbPass;
-    private Statement stmt;
-    private PreparedStatement pstmt;
+
 
     public Datalayer(String dbName, String user, String password) {
         // TODO: Initialize connection parameters
@@ -289,7 +287,7 @@ public class Datalayer {
         String deleteAbstract = "DELETE FROM abstract WHERE abstract_id = ?";
 
         try {
-            pstmt = conn.prepareStatement(deleteLink); 
+            PreparedStatement pstmt = conn.prepareStatement(deleteLink); 
             PreparedStatement pstmt2 = conn.prepareStatement(deleteAbstract);
 
             pstmt.setInt(1, facultyId);
@@ -321,11 +319,11 @@ public class Datalayer {
 
     public int addFacultyInterest(int facultyId, List<String> words) throws SQLException {
         int interests_added = 0; 
-        sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
+        String sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
         String sqlInsert = "INSERT INTO faculty_interest (faculty_id, interest_id) VALUES (?,?) ";
 
         try { 
-            pstmt = conn.prepareStatement(sql);
+            PreparedStatement pstmt = conn.prepareStatement(sql);
             PreparedStatement psInsert = conn.prepareStatement(sqlInsert);
             
             for (String word : words){
@@ -354,10 +352,10 @@ public class Datalayer {
 
     public int deleteFacultyInterest(int facultyId, int interestId) throws SQLException {
         int interests_deleted = 0;
-        sql = "DELETE FROM faculty_interest WHERE faculty_id = ? AND interest_id = ?";
+        String sql = "DELETE FROM faculty_interest WHERE faculty_id = ? AND interest_id = ?";
 
         try {
-            pstmt = conn.prepareStatement(sql); 
+            PreparedStatement pstmt = conn.prepareStatement(sql); 
 
             pstmt.setInt(1, facultyId);
             pstmt.setInt(2, interestId);
@@ -378,11 +376,11 @@ public class Datalayer {
 
     public int addStudentInterest(int studentId, List<String> words) throws SQLException {
         int interests_added = 0; 
-        sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
+        String sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
         String sqlInsert = "INSERT INTO student_interest (student_id, interest_id) VALUES (?,?) ";
 
         try { 
-            pstmt = conn.prepareStatement(sql);
+            PreparedStatement pstmt = conn.prepareStatement(sql);
             PreparedStatement psInsert = conn.prepareStatement(sqlInsert);
             
             for (String word : words){
@@ -411,10 +409,10 @@ public class Datalayer {
 
     public int deleteStudentInterest(int studentId, int interestId) throws SQLException {
         int interests_deleted = 0;
-        sql = "DELETE FROM student_interest WHERE student_id = ? AND interest_id = ?";
+        String sql = "DELETE FROM student_interest WHERE student_id = ? AND interest_id = ?";
 
         try {
-            pstmt = conn.prepareStatement(sql); 
+            PreparedStatement pstmt = conn.prepareStatement(sql); 
 
             pstmt.setInt(1, studentId);
             pstmt.setInt(2, interestId);
@@ -428,11 +426,11 @@ public class Datalayer {
     }
     public int addGuestInterest(int guestId, List<String> words) throws SQLException {
         int interests_added = 0; 
-        sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
+        String sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
         String sqlInsert = "INSERT INTO guest_interest (guest_id, interest_id) VALUES (?,?) ";
 
         try { 
-            pstmt = conn.prepareStatement(sql);
+            PreparedStatement pstmt = conn.prepareStatement(sql);
             PreparedStatement psInsert = conn.prepareStatement(sqlInsert);
             
             for (String word : words){
@@ -461,10 +459,10 @@ public class Datalayer {
 
     public int deleteGuestInterest(int guestId, int interestId) throws SQLException {
         int interests_deleted = 0;
-        sql = "DELETE FROM guest_interest WHERE guest_id = ? AND interest_id = ?";
+        String sql = "DELETE FROM guest_interest WHERE guest_id = ? AND interest_id = ?";
 
         try {
-            pstmt = conn.prepareStatement(sql); 
+            PreparedStatement pstmt = conn.prepareStatement(sql); 
 
             pstmt.setInt(1, guestId);
             pstmt.setInt(2, interestId);
@@ -515,14 +513,14 @@ public class Datalayer {
     public List<Faculty> matchFacultyByStudentInterest(int studentId) throws SQLException {
         List<Faculty> matchedFaculty = new ArrayList<>();
 
-        sql = " SELECT DISTINCT faculty.fname, faculty.lname, faculty.building, faculty.office_number, faculty.email" + 
+        String sql = " SELECT DISTINCT faculty.fname, faculty.lname, faculty.building, faculty.office_number, faculty.email" + 
             " FROM faculty" + 
             " JOIN faculty_interest USING (faculty_id)" + 
             " JOIN student_interest USING (interest_id)" + 
             " WHERE student_interest.student_id = ?";
         
         try {
-            pstmt = conn.prepareStatement(sql);
+            PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, studentId);
             System.out.println("Executing SQL: " + pstmt);
             ResultSet rs = pstmt.executeQuery();
