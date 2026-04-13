@@ -271,27 +271,21 @@ public class Datalayer {
         return -1;
     }
 
-    public int updateAbstract(int abstractId, String title, String abstractType, String content) throws SQLException {
-        int abstracts_updated = 0;
-        sql = "UPDATE abstract SET title = ?, abstract_type = ?, abstract_content = ? WHERE abstract_id = ?";
+   public void updateAbstract(int abstractId, String title, String abstractType, String content) throws SQLException {
+        String sql = "UPDATE abstract SET title = ?, abstract_type = ?, abstract_content = ? WHERE abstract_id = ?";
 
-        try {
-            pstmt = conn.prepareStatement(sql); 
-            pstmt.setString(1, title);
-            pstmt.setString(2, abstractType);
-            pstmt.setString(3, content);
-            pstmt.setInt(4, abstractId);
-            pstmt.executeUpdate();
-            abstracts_updated = 1;
-        } catch(SQLException e){
-            System.out.println("Error in updateAbstract: " + e.getMessage());
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, title);
+            ps.setString(2, abstractType);
+            ps.setString(3, content);
+            ps.setInt(4, abstractId);
+            ps.executeUpdate();
         }
-        return abstracts_updated;
     }
 
     public int deleteAbstract(int facultyId, int abstractId) throws SQLException {
         int abstracts_deleted = 0;
-        String deleteLink = "DELETE FROM faculty_abstract WHERE faculty_id = ?, abstract_id = ? ";
+        String deleteLink = "DELETE FROM faculty_abstract WHERE faculty_id = ? AND abstract_id = ?";
         String deleteAbstract = "DELETE FROM abstract WHERE abstract_id = ?";
 
         try {
