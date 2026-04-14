@@ -595,8 +595,15 @@ public class Datalayer {
      * Returns faculty with name, building, office, email per assignment requirements.
      */
     public List<Faculty> searchFacultyByKeyword(String keyword) throws SQLException {
-        // TODO: Search faculty by keyword in interests and abstracts
-        return new ArrayList<>();
+        List<Faculty> list = new ArrayList<>();
+        String sql = "SELECT * FROM faculty JOIN faculty_interest USING (faculty_id) JOIN interest USING (interest_id) WHERE interest_word = LOWER(?)";
+        String lower_keyword = keyword.toLowerCase();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, lower_keyword);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(mapFaculty(rs));
+        }
+        return list;
     }
 
     // Student: auto-match faculty who share interests 
