@@ -561,7 +561,10 @@ public class Datalayer {
     // Faculty: search students by interest keyword
     public List<Student> searchStudentsByInterest(String keyword) throws SQLException {
         List<Student> list = new ArrayList<>();
-        String sql = "SELECT * FROM student JOIN student_interest USING (student_id) JOIN interest USING (interest_id) WHERE interest_word = LOWER(?)";
+        String sql = "SELECT student_id, CONCAT(fname, ' ', lname) AS name, email, phone " +
+            "FROM student JOIN student_interest USING (student_id) " +
+            "JOIN interest USING (interest_id) " +
+            "WHERE interest_word = LOWER(?)";
         String lower_keyword = keyword.toLowerCase();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, lower_keyword);
@@ -596,7 +599,9 @@ public class Datalayer {
      */
     public List<Faculty> searchFacultyByKeyword(String keyword) throws SQLException {
         List<Faculty> list = new ArrayList<>();
-        String sql = "SELECT * FROM faculty JOIN faculty_interest USING (faculty_id) JOIN interest USING (interest_id) WHERE interest_word = LOWER(?)";
+        String sql = "SELECT CONCAT(fname, ' ', lname) AS name, building, office_number, email " + 
+            "FROM faculty JOIN faculty_interest USING (faculty_id) JOIN interest USING (interest_id) " + 
+            "WHERE interest_word = LOWER(?)";
         String lower_keyword = keyword.toLowerCase();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, lower_keyword);
