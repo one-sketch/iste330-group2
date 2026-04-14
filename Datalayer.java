@@ -3,6 +3,8 @@
 // Date: april 10 2026
 // SKELETON VERSION 
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -81,8 +83,15 @@ public class Datalayer {
     
     // PASSWORD HASHING — SHA-256
     public static String hashPassword(String plainText) {
-        // TODO:  do SHA-256 hashing
-        return null;
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(plainText.getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 not available", e);
+        }
     }
 
     //==============================INNER MODEL CLASSES==============================
@@ -98,77 +107,88 @@ public class Datalayer {
         }
     }
 
-    public static class Faculty {
+   public static class Faculty {
         public int    facultyId, accountId, building;
         public String fname, lname, email, officeNumber, cellPhone, slack, officeHours, calendarLink;
-        
         public Faculty(int fid, int aid, String fn, String ln, String em,
                        int bld, String off, String cell, String sl, String oh, String cal) {
-            // TODO: add fields
+            facultyId=fid; 
+            accountId=aid; 
+            fname=fn; 
+            lname=ln;
+            email=em;
+            building=bld; 
+            officeNumber=off; 
+            cellPhone=cell; 
+            slack=sl;
+            officeHours=oh; 
+            calendarLink=cal;
         }
-        
-        public String getFullName() {
-            // TODO: Return full name
-            return null;
+        public String getFullName() { 
+            return fname + " " + lname; 
         }
-        
         public String getContactInfo() {
-            // TODO: Return formatted contact info
-            return null;
+            return "Name:     " + getFullName() + "\n" +
+                   "Building: " + building + "\n" +
+                   "Office:   " + officeNumber + "\n" +
+                   "Email:    " + email;
         }
     }
+        
+    
 
     public static class Student {
         public int studentId, accountId;
         public String fname, lname, email, phone;
 
         public Student(int sid, int aid, String fn, String ln, String em, String ph) {
-            // TODO: add fields
+            studentId = sid;
+            accountId = aid;
+            fname = fn;
+            lname = ln;
+            email = em;
+            phone = ph;
         }
 
         public String getFullName() {
-            // TODO: Return full name
-            return null;
+            return fname + " " + lname;
         }
 
         public String getContactInfo() {
-            // TODO: Return formatted contact info
-            return null;
+            return "Name:  " + getFullName() + "\n" + "Email: " + email;
         }
 
         @Override
         public String toString() {
-            // TODO: Return string representation
-            return null;
+            return studentId + " - " + fname + " " + lname + " (" + email + ")";
         }
     }
 
     public static class Guest {
         public int    guestId, accountId;
         public String fname, lname, companyName, email;
-        
         public Guest(int gid, int aid, String fn, String ln, String co, String em) {
-            // TODO: add fields
+            guestId=gid; 
+            accountId=aid;
+             fname=fn; 
+             lname=ln; 
+             companyName=co; 
+             email=em;
         }
-        
         public String getDisplayName() {
-            // TODO: Return display name
-            return null;
+            return (companyName != null && !companyName.isEmpty()) ? companyName : fname + " " + lname;
         }
     }
 
     public static class Abstract {
         public int    abstractId;
         public String title, abstractType, abstractContent;
-        
         public Abstract(int id, String t, String type, String content) {
-            // TODO: add fields
+            abstractId=id; title=t; abstractType=type; abstractContent=content;
         }
-        
         public String toString() {
-            // TODO: Return string representation
-            return null;
-        }
+             return "[" + abstractId + "] " + title + " (" + abstractType + ")"; 
+            }
     }
 
     public static class Interest {
@@ -607,30 +627,32 @@ public class Datalayer {
         throw new SQLException("Could not create interest: " + word);
     }
 
-    // validate that a keyword is 1-3 words 
     public static boolean isValidKeyword(String word) {
-        // TODO: Validate keyword length
-        return false;
+        if (word == null || word.trim().isEmpty()) return false;
+        String[] parts = word.trim().split("\\s+");
+        return parts.length >= 1 && parts.length <= 3;
     }
 
-  // Row mappers: convert SQL ResultSet rows into Java objects (Faculty, Student, Guest, Abstract)
-    private Faculty mapFaculty(ResultSet rs) throws SQLException {
-        // TODO: Map ResultSet to Faculty object
-        return null;
+    // ── Row mappers ──
+    private Faculty  mapFaculty(ResultSet rs) throws SQLException {
+        return new Faculty(rs.getInt("faculty_id"), rs.getInt("account_id"),
+            rs.getString("fname"), rs.getString("lname"), rs.getString("email"),
+            rs.getInt("building"), rs.getString("office_number"),
+            rs.getString("cell_phone"), rs.getString("slack"),
+            rs.getString("office_hours"), rs.getString("calendar_link"));
     }
-    
-    private Student mapStudent(ResultSet rs) throws SQLException {
-        // TODO: Map ResultSet to Student object
-        return null;
+    private Student  mapStudent(ResultSet rs) throws SQLException {
+        return new Student(rs.getInt("student_id"), rs.getInt("account_id"),
+            rs.getString("fname"), rs.getString("lname"),
+            rs.getString("email"), rs.getString("phone"));
     }
-    
-    private Guest mapGuest(ResultSet rs) throws SQLException {
-        // TODO: Map ResultSet to Guest object
-        return null;
+    private Guest    mapGuest(ResultSet rs) throws SQLException {
+        return new Guest(rs.getInt("guest_id"), rs.getInt("account_id"),
+            rs.getString("fname"), rs.getString("lname"),
+            rs.getString("company_name"), rs.getString("email"));
     }
-    
     private Abstract mapAbstract(ResultSet rs) throws SQLException {
-        // TODO: Map ResultSet to Abstract object
-        return null;
+        return new Abstract(rs.getInt("abstract_id"), rs.getString("title"),
+            rs.getString("abstract_type"), rs.getString("abstract_content"));
     }
 }
