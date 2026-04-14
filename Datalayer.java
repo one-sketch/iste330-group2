@@ -8,42 +8,85 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Datalayer {
+   private final String DRIVER = "com.mysql.cj.jdbc.Driver";
+   private final String DBURL = "jdbc:mysql://localhost/";
 
     private Connection conn;
-    private String dbUrl;
     private String dbUser;
     private String dbPass;
 
-
+    //Initialize
     public Datalayer(String dbName, String user, String password) {
-        // TODO: Initialize connection parameters
+       if(!connect(dbName, user, password)){
+          System.out.println("(init): DATABASE CONNECTION REFUSED");
+       }  
+    }
+    
+    // DB CONNECTION
+    public boolean connect(String database, String username, String password) {
+      try{
+         conn = DriverManager.getConnection(DBURL+database, username, password);
+         System.out.println("Database Connected");
+         return true;
+      }catch (SQLException sqle){
+         System.out.println("(connect): COULD NOT CONNECT TO DATABASE");
+         System.out.println(sqle);
+         return false;
+      }   
     }
 
+    //Close established connection   
+    public boolean disconnect(){
+        if(conn == null){//If connection has not been established, abort
+            System.out.println("(disconnect) CONNECTION NOT ESTABLISHED, ABORTING DISCONNECT");
+            return false;
+        }
+        try{
+            if(!conn.isClosed()){//If the connection is open, attempt to close it
+                conn.close();
+                return true;  
+            }else{//Connection already closed
+                System.out.println("(disconnect) CONNECTION ALREADY ESTABLISHED ABORTING DISCONNECT");
+                return false;
+            }
+        }catch(SQLException sqle){
+                System.out.println("(disconnect) CONNECTION FAILED TO CLOSE");
+                System.out.println(sqle);
+                return false;
+        }
+    }
+   
+    //Check connection to DB
+    public boolean isConnected() {
+        if(conn == null){//If connection has not been established
+            return false;
+        }
+        try{
+            if(!conn.isClosed()){//connection not closed
+                return true;
+            }else{//connection is closed
+                return false;
+            }
+        }catch (SQLException sqle){
+            System.out.println("(isConnected) FAILED TO CHECK CONNECTION");
+            System.out.println(sqle);
+            return false;
+        }
+    }
+    
     // PASSWORD HASHING — SHA-256
     public static String hashPassword(String plainText) {
         // TODO:  do SHA-256 hashing
         return null;
     }
-    // DB CONNECTION
-    public boolean connect() {
-        // TODO: connect database connection
-        return false;
-    }
 
-    public void disconnect() {
-        // TODO: close database connection
-    }
-
-    public boolean isConnected() {
-        // TODO: check if connection is active
-        return false;
-    }
-
-    // INNER MODEL CLASSES
+    //==============================INNER MODEL CLASSES==============================
+    
     public static class Account {
         public int    accountId;
         public String username, accountType;
