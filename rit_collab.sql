@@ -229,16 +229,23 @@ INSERT INTO Guest_Interest (guest_id, interest_id) VALUES
 
 -- Lookup Tables
 CREATE TABLE CollegeName_Lookup (
-    college_id   VARCHAR(6)  PRIMARY KEY,
-    college_name VARCHAR(70) NOT NULL
+    college_id   VARCHAR(10) PRIMARY KEY,
+    college_name VARCHAR(100) NOT NULL
 );
 
--- Insert statement for collegeName_lookup table sample data
+-- Insert statement for collegeName_lookup table sample data - ALL RIT Colleges
 INSERT INTO CollegeName_Lookup (college_id, college_name) VALUES
-    ('COS', 'College of Science'),
+    ('ART', 'College of Art and Design'),
+    ('COE', 'College of Engineering'),
+    ('ENGIN', 'College of Engineering Technology'),
     ('GCCIS', 'Golisano College of Computing and Information Sciences'),
-    ('NTID', 'National Technical Institute for the Deaf');
-
+    ('HEALTH', 'College of Health Sciences and Technology'),
+    ('INDIV', 'College of Individualized Study'),
+    ('LA', 'College of Liberal Arts'),
+    ('NTID', 'National Technical Institute for the Deaf'),
+    ('SAUND', 'Saunders College of Business'),
+    ('SCI', 'College of Science'),
+    ('SUST', 'College of Sustainability');
 CREATE TABLE major (
     major_id   INT PRIMARY KEY AUTO_INCREMENT,
     major_name VARCHAR(64) NOT NULL
