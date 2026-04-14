@@ -11,10 +11,10 @@ import java.util.List;
 
 public class PresentationLayer {
     
-    private static DataLayer db;
-    private static DataLayer.Account account;
-    private static DataLayer.Faculty faculty;
-    private static DataLayer.Student student;
+    private static Datalayer db;
+    private static Datalayer.Account account;
+    private static Datalayer.Faculty faculty;
+    private static Datalayer.Student student;
     
     public static void main(String[] args) {
           // Connect to database - ONE combined dialog
@@ -39,7 +39,7 @@ public class PresentationLayer {
           String pass = new String(passField.getPassword());
           
           // Create DataLayer instance (constructor attempts connection)
-          db = new DataLayer("rit_collab", user, pass);
+          db = new Datalayer("rit_collab", user, pass);
           
           // Check if connection was successful using isConnected()
           if (!db.isConnected()) {

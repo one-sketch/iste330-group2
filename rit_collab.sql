@@ -27,7 +27,6 @@ CREATE TABLE Account (
 );
 
 -- Insert statement for account table sample data with SHA-256 hashes
--- SHA-256('of password') 
 INSERT INTO Account (account_id, username, pass_hash, account_type) VALUES
     (1, 'jdoe', 'e98fa0ea8c4cd3339be2c100653a54fa74eb4fdc29bf068728f0c0089f3ec7f2', 'Faculty'),
     (2, 'asmith', '7d68b8db8f2668594d540704cc44a3df7ccf1b8b534b97380371755bef02a45b', 'Student'),
@@ -60,7 +59,7 @@ CREATE TABLE Faculty (
     office_number VARCHAR(10),
     cell_phone    VARCHAR(20),
     slack         VARCHAR(50),
-    college_id    INT,
+    college_id    VARCHAR(10),
     office_hours  VARCHAR(255),
     calendar_link VARCHAR(255),
     FOREIGN KEY (account_id) REFERENCES Account(account_id)
@@ -70,11 +69,11 @@ CREATE TABLE Faculty (
 INSERT INTO Faculty (faculty_id, account_id, fname, lname, email, 
     building, office_number, cell_phone, slack, college_id, office_hours, calendar_link) 
 VALUES
-    (1, 1, 'John', 'Doe', 'jdoe@rit.edu', 1, '101', '123-456-7890', 'jdoe', 1, '9:00 AM - 5:00 PM', 'https://calendar.rit.edu/jdoe'),
-    (2, 4, 'Bruce', 'Wayne', 'bwayne@rit.edu', 2, '202', '234-567-8901', 'bwayne', 2, '10:00 AM - 6:00 PM', 'https://calendar.rit.edu/bwayne'),
-    (3, 8, 'Tony', 'Stark', 'tstark@rit.edu', 3, '303', '345-678-9012', 'tstark', 3, '11:00 AM - 7:00 PM', 'https://calendar.rit.edu/tstark'),
-    (4, 15, 'Natasha', 'Romanoff', 'nromanoff@rit.edu', 4, '404', '456-789-0123', 'nromanoff', 4, '12:00 PM - 8:00 PM', 'https://calendar.rit.edu/nromanoff'),
-    (5, 20, 'Sam', 'Wilson', 'swilson@rit.edu', 5, '505', '567-890-1234', 'swilson', 5, '1:00 PM - 9:00 PM', 'https://calendar.rit.edu/swilson');
+    (1, 1, 'John', 'Doe', 'jdoe@rit.edu', 70, 'GOL-2400', '585-555-1001', 'jdoe', 'GCCIS', '9:00 AM - 5:00 PM', 'https://calendar.rit.edu/jdoe'),
+    (2, 4, 'Bruce', 'Wayne', 'bwayne@rit.edu', 70, 'GOL-2350', '585-555-1002', 'bwayne', 'GCCIS', '10:00 AM - 6:00 PM', 'https://calendar.rit.edu/bwayne'),
+    (3, 8, 'Tony', 'Stark', 'tstark@rit.edu', 70, 'GOL-2310', '585-555-1003', 'tstark', 'GCCIS', '11:00 AM - 7:00 PM', 'https://calendar.rit.edu/tstark'),
+    (4, 15, 'Natasha', 'Romanoff', 'nromanoff@rit.edu', 70, 'GOL-2405', '585-555-1004', 'nromanoff', 'GCCIS', '12:00 PM - 8:00 PM', 'https://calendar.rit.edu/nromanoff'),
+    (5, 20, 'Sam', 'Wilson', 'swilson@rit.edu', 70, 'GOL-2420', '585-555-1005', 'swilson', 'GCCIS', '1:00 PM - 9:00 PM', 'https://calendar.rit.edu/swilson');
 
 CREATE TABLE Student (
     student_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -182,13 +181,18 @@ CREATE TABLE Faculty_interest (
     FOREIGN KEY (interest_id) REFERENCES Interest(interest_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Insert statement for faculty_interest table sample data
+-- Insert statement for faculty_interest table sample data (EXACTLY 3 per faculty)
 INSERT INTO Faculty_interest (faculty_id, interest_id) VALUES
-    (1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
-    (2, 6), (2, 7), (2, 8), (2, 9),
-    (3, 10), (3, 11), (3, 2), (3, 13), (3, 14),
-    (4, 11), (4, 12), (4, 13), (4, 14),
-    (5, 15), (5, 16), (5, 17), (5, 18), (5, 19), (5, 20);
+    -- Faculty 1 (John Doe) - 3 interests
+    (1, 1), (1, 2), (1, 3),
+    -- Faculty 2 (Bruce Wayne) - 3 interests
+    (2, 4), (2, 6), (2, 7),
+    -- Faculty 3 (Tony Stark) - 3 interests
+    (3, 10), (3, 11), (3, 14),
+    -- Faculty 4 (Natasha Romanoff) - 3 interests
+    (4, 11), (4, 12), (4, 13),
+    -- Faculty 5 (Sam Wilson) - 3 interests
+    (5, 15), (5, 16), (5, 17);
 
 CREATE TABLE Student_Interest (
     student_id  INT NOT NULL,
@@ -200,14 +204,23 @@ CREATE TABLE Student_Interest (
 
 -- Insert statement for student_interest table sample data
 INSERT INTO Student_Interest (student_id, interest_id) VALUES
+    -- Student 1 (Alice Smith) - 3 interests
     (1, 1), (1, 2), (1, 3),
+    -- Student 2 (Clark Kent) - 3 interests
     (2, 4), (2, 5), (2, 6),
+    -- Student 3 (Peter Parker) - 3 interests
     (3, 7), (3, 8), (3, 9),
+    -- Student 4 (Natasha Romanoff) - 3 interests
     (4, 10), (4, 11), (4, 12),
+    -- Student 5 (Tony Stark) - 3 interests
     (5, 13), (5, 14), (5, 15),
+    -- Student 6 (Bruce Wayne) - 3 interests
     (6, 16), (6, 17), (6, 18),
+    -- Student 7 (Diana Prince) - 2 interests 
     (7, 19), (7, 20),
+    -- Student 8 (Jack Bauer) - 2 interests
     (8, 1), (8, 20),
+    -- Student 9 (Steve Rogers) - 2 interests
     (9, 2), (9, 19);
 
 CREATE TABLE Guest_Interest (
@@ -220,12 +233,18 @@ CREATE TABLE Guest_Interest (
 
 -- Insert statement for guest_interest table sample data
 INSERT INTO Guest_Interest (guest_id, interest_id) VALUES
-    (1, 1), (1, 5), (1, 10),
-    (2, 2), (2, 6), (2, 11),
-    (3, 3), (3, 7), (3, 12),
-    (4, 4), (4, 8), (4, 13),
-    (5, 5), (5, 9), (5, 14),
-    (6, 1), (6, 15), (6, 20);
+    -- Guest 1 (Guest User) - 1 keyword
+    (1, 1),   -- Artificial Intelligence
+    -- Guest 2 (D. Prince) - 1 keyword
+    (2, 2),   -- Machine Learning
+    -- Guest 3 (Steve Rogers) - 1 keyword
+    (3, 3),   -- Data Science
+    -- Guest 4 (Clark Kent) - 1 keyword
+    (4, 4),   -- Cybersecurity
+    -- Guest 5 (Diana Prince) - 1 keyword
+    (5, 5),   -- Software Engineering
+    -- Guest 6 (Guest User) - 1 keyword
+    (6, 6);   -- Cloud Computing
 
 -- Lookup Tables
 CREATE TABLE CollegeName_Lookup (
@@ -246,6 +265,7 @@ INSERT INTO CollegeName_Lookup (college_id, college_name) VALUES
     ('SAUND', 'Saunders College of Business'),
     ('SCI', 'College of Science'),
     ('SUST', 'College of Sustainability');
+
 CREATE TABLE major (
     major_id   INT PRIMARY KEY AUTO_INCREMENT,
     major_name VARCHAR(64) NOT NULL
@@ -265,7 +285,7 @@ INSERT INTO major (major_id, major_name) VALUES
     (10, 'Packaging Science');
 
 CREATE TABLE College_Major (
-    college_id VARCHAR(20) NOT NULL,
+    college_id VARCHAR(10) NOT NULL,
     major_id   INT         NOT NULL,
     PRIMARY KEY (college_id, major_id),
     FOREIGN KEY (college_id) REFERENCES CollegeName_Lookup(college_id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -274,14 +294,6 @@ CREATE TABLE College_Major (
 
 -- Insert statement for college_major table sample data
 INSERT INTO College_Major (college_id, major_id) VALUES
-    ('COS', 1),
-    ('COS', 2),
-    ('COS', 3),
-    ('COS', 4),
-    ('COS', 6),
-    ('COS', 8),
-    ('COS', 9),
-    ('COS', 10),
     ('GCCIS', 1),
     ('GCCIS', 2),
     ('GCCIS', 3),
@@ -290,6 +302,14 @@ INSERT INTO College_Major (college_id, major_id) VALUES
     ('GCCIS', 8),
     ('GCCIS', 9),
     ('GCCIS', 10),
+    ('SCI', 1),
+    ('SCI', 2),
+    ('SCI', 3),
+    ('SCI', 4),
+    ('SCI', 6),
+    ('SCI', 8),
+    ('SCI', 9),
+    ('SCI', 10),
     ('NTID', 8);
 
 CREATE TABLE student_major (
