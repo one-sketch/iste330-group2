@@ -560,8 +560,15 @@ public class Datalayer {
     // SEARCH & MATCHING 
     // Faculty: search students by interest keyword
     public List<Student> searchStudentsByInterest(String keyword) throws SQLException {
-        // TODO: Search students by interest
-        return new ArrayList<>();
+        List<Student> list = new ArrayList<>();
+        String sql = "SELECT * FROM student JOIN student_interest USING (student_id) JOIN interest USING (interest_id) WHERE interest_word = LOWER(?)";
+        String lower_keyword = keyword.toLowerCase();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, lower_keyword);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(mapStudent(rs));
+        }
+        return list;
     }
 
     // Faculty: search students by name 
