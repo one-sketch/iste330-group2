@@ -287,18 +287,29 @@ public class DataLayer {
     }
     // PROFILE GETTERS
     public Faculty getFacultyByAccount(int accountId) throws SQLException {
-        // TODO: Retrieve faculty by account ID
+        String sql = "SELECT * FROM rit_collab.Faculty WHERE account_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)){
+            stmt.setInt(1,accountId);
+            ResultSet resultSet = stmt.executeQuery(sql);
+        }
         return null;
     }
 
     public Student getStudentByAccount(int accountId) throws SQLException {
-        // TODO: Retrieve student by account ID
+        String sql = "SELECT * FROM rit_collab.Student WHERE account_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)){
+            stmt.setInt(1,accountId);
+            ResultSet resultSet = stmt.executeQuery(sql);
+        }
         return null;
     }
 
     public Guest getGuestByAccount(int accountId) throws SQLException {
-        // TODO: Retrieve guest by account ID
-        return null;
+        String sql = "SELECT * FROM rit_collab.Guest WHERE account_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)){
+            stmt.setInt(1,accountId);
+            ResultSet resultSet = stmt.executeQuery(sql);
+        }        return null;
     }
 
     // ABSTRACTS — Faculty 
