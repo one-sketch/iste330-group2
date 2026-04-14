@@ -14,7 +14,7 @@ import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Datalayer {
+public class DataLayer {
    private final String DRIVER = "com.mysql.cj.jdbc.Driver";
    private final String DBURL = "jdbc:mysql://localhost/";
 
@@ -23,7 +23,7 @@ public class Datalayer {
     private String dbPass;
 
     //Initialize
-    public Datalayer(String dbName, String user, String password) {
+    public DataLayer(String dbName, String user, String password) {
        if(!connect(dbName, user, password)){
           System.out.println("(init): DATABASE CONNECTION REFUSED");
        }  
