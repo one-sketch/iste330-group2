@@ -291,8 +291,11 @@ public class Datalayer {
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1,accountId);
             ResultSet resultSet = stmt.executeQuery(sql);
+
+            resultSet.next();
+            return mapFaculty(resultSet);
         }
-        return null;
+        
     }
 
     public Student getStudentByAccount(int accountId) throws SQLException {
@@ -300,8 +303,11 @@ public class Datalayer {
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1,accountId);
             ResultSet resultSet = stmt.executeQuery(sql);
+
+            resultSet.next();
+            return mapStudent(resultSet);
         }
-        return null;
+        
     }
 
     public Guest getGuestByAccount(int accountId) throws SQLException {
@@ -309,7 +315,10 @@ public class Datalayer {
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1,accountId);
             ResultSet resultSet = stmt.executeQuery(sql);
-        }        return null;
+
+            resultSet.next();
+            return mapGuest(resultSet);
+        }        
     }
 
     // ABSTRACTS — Faculty 
