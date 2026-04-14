@@ -189,13 +189,11 @@ public class PresentationLayer {
         
     }
     
-    private static void addAbstract() {
+    private static void addAbstract() throws IOException {
        
         
         try {
            
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "File not found!", "Error", JOptionPane.ERROR_MESSAGE);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
