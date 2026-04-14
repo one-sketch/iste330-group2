@@ -4,7 +4,7 @@ USE rit_collab;
 
 -- Drop in reverse FK order
 -- (delete dependent tables first to avoid foreign key errors)
-DROP TABLE IF EXISTS GIs theuest_Interest;
+DROP TABLE IF EXISTS Guest_Interest;
 DROP TABLE IF EXISTS Student_Interest;
 DROP TABLE IF EXISTS Faculty_interest;
 DROP TABLE IF EXISTS Faculty_Abstract;
