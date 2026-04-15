@@ -290,7 +290,7 @@ public class Datalayer {
         String sql = "SELECT * FROM rit_collab.Faculty WHERE account_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1,accountId);
-            ResultSet resultSet = stmt.executeQuery(sql);
+            ResultSet resultSet = stmt.executeQuery();
 
             resultSet.next();
             return mapFaculty(resultSet);
@@ -302,7 +302,7 @@ public class Datalayer {
         String sql = "SELECT * FROM rit_collab.Student WHERE account_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1,accountId);
-            ResultSet resultSet = stmt.executeQuery(sql);
+            ResultSet resultSet = stmt.executeQuery();
 
             resultSet.next();
             return mapStudent(resultSet);
@@ -399,7 +399,21 @@ public class Datalayer {
         }
         return list;
     }
+        // Student interest
+        public List<Interest> getStudentInterests(int studentId) throws SQLException {
+            List<Interest> list = new ArrayList<>();
+            String sql = "SELECT i.* FROM Interest i JOIN Student_Interest si ON i.interest_id = si.interest_id WHERE si.student_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    list.add(new Interest(rs.getInt("interest_id"), rs.getString("interest_word")));
+                }
+            }
+            return list;
+        }
 
+       
     public int addFacultyInterest(int facultyId, List<String> words) throws SQLException {
         int interests_added = 0; 
         String sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
@@ -451,11 +465,19 @@ public class Datalayer {
         return interests_deleted;
     }
 
-    // INTERESTS — Student
-    public List<Interest> getStudentInterests(int studentId) throws SQLException {
-        // TODO: Retrieve student interests
-        return new ArrayList<>();
-    }
+    // INTERESTS — Public users
+        public List<Interest> getGuestInterests(int guestId) throws SQLException {
+            List<Interest> list = new ArrayList<>();
+            String sql = "SELECT i.* FROM Interest i JOIN Guest_Interest gi ON i.interest_id = gi.interest_id WHERE gi.guest_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, guestId);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    list.add(new Interest(rs.getInt("interest_id"), rs.getString("interest_word")));
+                }
+            }
+            return list;
+        }
 
     public int addStudentInterest(int studentId, List<String> words) throws SQLException {
         int interests_added = 0; 
