@@ -366,24 +366,19 @@ public class Datalayer {
 
     public int deleteAbstract(int facultyId, int abstractId) throws SQLException {
         int abstracts_deleted = 0;
-        String deleteLink = "DELETE FROM faculty_abstract WHERE faculty_id = ? AND abstract_id = ?";
-        String deleteAbstract = "DELETE FROM abstract WHERE abstract_id = ?";
+
+        String delete_sql = "DELETE FROM abstract WHERE abstract_id = ?";
 
         try {
-            PreparedStatement pstmt = conn.prepareStatement(deleteLink); 
-            PreparedStatement pstmt2 = conn.prepareStatement(deleteAbstract);
+            PreparedStatement pstmt = conn.prepareStatement(delete_sql); 
 
-            pstmt.setInt(1, facultyId);
-            pstmt.setInt(2, abstractId);
+            pstmt.setInt(1, abstractId);
             pstmt.executeUpdate();
-
-
-            pstmt2.setInt(1, abstractId);
-            pstmt2.executeUpdate();
 
             abstracts_deleted = 1;
         } catch(SQLException e){
             System.out.println("Error in deleteAbstract: " + e.getMessage());
+            
         }
         return abstracts_deleted;
     }
