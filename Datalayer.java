@@ -629,20 +629,23 @@ public class Datalayer {
     }
     // SEARCH & MATCHING 
     // Faculty: search students by interest keyword
-    public List<Student> searchStudentsByInterest(String keyword) throws SQLException {
-        List<Student> list = new ArrayList<>();
-        String sql = "SELECT student_id, CONCAT(fname, ' ', lname) AS name, email, phone " +
-            "FROM student JOIN student_interest USING (student_id) " +
-            "JOIN interest USING (interest_id) " +
-            "WHERE interest_word = LOWER(?)";
-        String lower_keyword = keyword.toLowerCase();
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, lower_keyword);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(mapStudent(rs));
+    public List<Student> searchStudentsByInterest(String keyword) {
+    List<Student> list = new ArrayList<>();
+    String sql = "SELECT DISTINCT s.* FROM Student s " +
+                 "JOIN Student_Interest si ON s.student_id = si.student_id " +
+                 "JOIN Interest i ON si.interest_id = i.interest_id " +
+                 "WHERE i.interest_word LIKE ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, "%" + keyword + "%");
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            list.add(mapStudent(rs));
         }
-        return list;
+    } catch (SQLException e) {
+        System.out.println("Error in searchStudentsByInterest: " + e.getMessage());
     }
+    return list;
+}
 
     // Faculty: search students by name 
     public List<Student> searchStudentsByName(String name) throws SQLException {
@@ -658,15 +661,20 @@ public class Datalayer {
     }
 
     // Faculty: auto-match students who share interests 
-   public List<Student> matchStudentsByFacultyInterest(int facultyId) throws SQLException {
+   public List<Student> matchStudentsByFacultyInterest(int facultyId) {
         List<Student> list = new ArrayList<>();
         String sql = "SELECT DISTINCT s.* FROM Student s " +
-                     "JOIN Student_Interest si ON s.student_id=si.student_id " +
-                     "JOIN Faculty_interest fi ON si.interest_id=fi.interest_id WHERE fi.faculty_id=?";
+                    "JOIN Student_Interest si ON s.student_id = si.student_id " +
+                    "JOIN Faculty_interest fi ON si.interest_id = fi.interest_id " +
+                    "WHERE fi.faculty_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, facultyId);
             ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(mapStudent(rs));
+            while (rs.next()) {
+                list.add(mapStudent(rs));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in matchStudentsByFacultyInterest: " + e.getMessage());
         }
         return list;
     }
@@ -675,49 +683,59 @@ public class Datalayer {
      * Student: search faculty by keyword — checks BOTH interests AND abstract content.
      * Returns faculty with name, building, office, email per assignment requirements.
      */
-    public List<Faculty> searchFacultyByKeyword(String keyword) throws SQLException {
-        List<Faculty> list = new ArrayList<>();
-        String sql = "SELECT CONCAT(fname, ' ', lname) AS name, building, office_number, email " + 
-            "FROM faculty JOIN faculty_interest USING (faculty_id) JOIN interest USING (interest_id) " + 
-            "WHERE interest_word = LOWER(?)";
-        String lower_keyword = keyword.toLowerCase();
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, lower_keyword);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(mapFaculty(rs));
+        public List<Faculty> searchFacultyByKeyword(String keyword) {
+            List<Faculty> list = new ArrayList<>();
+            String sql = "SELECT DISTINCT f.* FROM Faculty f " +
+                        "LEFT JOIN Faculty_interest fi ON f.faculty_id = fi.faculty_id " +
+                        "LEFT JOIN Interest i ON fi.interest_id = i.interest_id " +
+                        "LEFT JOIN Faculty_Abstract fa ON f.faculty_id = fa.faculty_id " +
+                        "LEFT JOIN abstract a ON fa.abstract_id = a.abstract_id " +
+                        "WHERE i.interest_word LIKE ? OR a.abstract_content LIKE ? OR a.title LIKE ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                String q = "%" + keyword + "%";
+                ps.setString(1, q);
+                ps.setString(2, q);
+                ps.setString(3, q);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    list.add(mapFaculty(rs));
+                }
+            } catch (SQLException e) {
+                System.out.println("Error in searchFacultyByKeyword: " + e.getMessage());
+            }
+            return list;
         }
-        return list;
-    }
 
     // Student: auto-match faculty who share interests 
-    public List<Faculty> matchFacultyByStudentInterest(int studentId) throws SQLException {
-        List<Faculty> matchedFaculty = new ArrayList<>();
-
-        String sql = " SELECT DISTINCT faculty.fname, faculty.lname, faculty.building, faculty.office_number, faculty.email" + 
-            " FROM faculty" + 
-            " JOIN faculty_interest USING (faculty_id)" + 
-            " JOIN student_interest USING (interest_id)" + 
-            " WHERE student_interest.student_id = ?";
-        
-        try {
-            PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.setInt(1, studentId);
-            System.out.println("Executing SQL: " + pstmt);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-                String fname = rs.getString("fname");
-                String lname = rs.getString("lname");
-                int building = rs.getInt("building");
-                String office = rs.getString("office_number");
-                String email = rs.getString("email");
-                matchedFaculty.add(new Faculty(-1, -1, fname, lname, email, building, office, null, null, null, null));
+         public List<Faculty> matchFacultyByStudentInterest(int studentId) {
+                List<Faculty> list = new ArrayList<>();
+                String sql = "SELECT DISTINCT f.faculty_id, f.account_id, f.fname, f.lname, f.email, " +
+                            "f.building, f.office_number " +
+                            "FROM Faculty f " +
+                            "JOIN Faculty_interest fi ON f.faculty_id = fi.faculty_id " +
+                            "JOIN Student_Interest si ON fi.interest_id = si.interest_id " +
+                            "WHERE si.student_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setInt(1, studentId);
+                    ResultSet rs = ps.executeQuery();
+                    while (rs.next()) {
+                        Faculty f = new Faculty(
+                            rs.getInt("faculty_id"),
+                            rs.getInt("account_id"),
+                            rs.getString("fname"),
+                            rs.getString("lname"),
+                            rs.getString("email"),
+                            rs.getInt("building"),
+                            rs.getString("office_number"),
+                            null, null, null, null
+                        );
+                        list.add(f);
+                    }
+                } catch (SQLException e) {
+                    System.out.println("Error in matchFacultyByStudentInterest: " + e.getMessage());
+                }
+                return list;
             }
-        }
-        catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return matchedFaculty;
-    }
 
    /** Public/Guest: search both faculty and students by one keyword */
     public List<Faculty> searchFacultyForPublic(String keyword) throws SQLException {
