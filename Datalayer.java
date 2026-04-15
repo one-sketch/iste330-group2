@@ -347,39 +347,43 @@ public class Datalayer {
      * Insert abstract from file content or typed text.
      * abstractType must be "book" or "speaking".
      */
-    public int insertAbstract(String title, String abstractType, String abstractContent) {
-        abstractType = abstractType.toLowerCase().trim();
-        if (abstractType == "book" || abstractType == "speaking") {
-            // nothing happens
-            // This is for validating the abstract type
-        } else {
-            System.out.println("Invalid Abstract Type");
-            return -1;
-        }
-        String sql = "INSERT INTO abstract (title, abstract_type, abstract_content) VALUES (?,?,?)";
-        try {
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, title);
-            ps.setString(2, abstractType);
-            ps.setString(3, abstractContent);
-
-            int result = ps.executeUpdate();
-            
-
-            // When the insert fails
-            if (result == 0) {
-                throw new SQLException("Failed to insert");
+        public int insertAbstract(int facultyId, String title, String abstractType, String content) throws SQLException {
+            abstractType = abstractType.toLowerCase().trim();
+            if (!abstractType.equals("book") && !abstractType.equals("speaking")) {
+                System.out.println("Invalid Abstract Type");
+                return -1;
             }
-
-            return result;
             
-        } catch (SQLException sqle) {
-            System.out.println("Error in insertAbstract");
-            System.out.println(sqle);
-            return -1;
-        } 
-    }
-
+            String sql = "INSERT INTO abstract (title, abstract_type, abstract_content) VALUES (?,?,?)";
+            try {
+                PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, title);
+                ps.setString(2, abstractType);
+                ps.setString(3, content);
+                
+                int result = ps.executeUpdate();
+                
+                if (result == 0) {
+                    throw new SQLException("Failed to insert");
+                }
+                
+                // Get the generated abstract ID
+                ResultSet keys = ps.getGeneratedKeys();
+                if (keys.next()) {
+                    int newId = keys.getInt(1);
+                    // Link to faculty
+                    addFacultyAbstract(newId, facultyId);
+                    return newId;
+                }
+                
+                return result;
+                
+            } catch (SQLException sqle) {
+                System.out.println("Error in insertAbstract");
+                System.out.println(sqle);
+                return -1;
+            }
+        }
     public int addFacultyAbstract(int abstractID, int facultyID) {
         String sql = "INSERT INTO Faculty_Abstract (abstract_id, faculty_id) VALUES (?,?)";
         try {
