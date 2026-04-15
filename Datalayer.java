@@ -347,9 +347,37 @@ public class Datalayer {
      * Insert abstract from file content or typed text.
      * abstractType must be "book" or "speaking".
      */
-    public int insertAbstract(int facultyId, String title, String abstractType, String content) throws SQLException {
-        // TODO: Insert new abstract
-        return -1;
+    public int insertAbstract(String title, String abstractType, String abstractContent) {
+        abstractType = abstractType.toLowerCase().trim();
+        if (abstractType == "book" || abstractType == "speaking") {
+            // nothing happens
+            // This is for validating the abstract type
+        } else {
+            System.out.println("Invalid Abstract Type");
+            return -1;
+        }
+        String sql = "INSERT INTO abstract (title, abstract_type, abstract_content) VALUES (?,?,?)";
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, title);
+            ps.setString(2, abstractType);
+            ps.setString(3, abstractContent);
+
+            int result = ps.executeUpdate();
+            
+
+            // When the insert fails
+            if (result == 0) {
+                throw new SQLException("Failed to insert");
+            }
+
+            return result;
+            
+        } catch (SQLException sqle) {
+            System.out.println("Error in insertAbstract");
+            System.out.println(sqle);
+            return -1;
+        } 
     }
 
    public void updateAbstract(int abstractId, String title, String abstractType, String content) throws SQLException {
