@@ -255,73 +255,117 @@ public class PresentationLayer {
     }
 
 
-    private static void addAbstract() {
-        String[] inputMethods = {"Load from .txt file", "Type / paste manually"};
-        int method = JOptionPane.showOptionDialog(null, "How do you want to provide the abstract text?", "Add Abstract",
-            JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, inputMethods, inputMethods[0]);
-        if (method < 0) return;
-       
-        JPanel p = new JPanel(new GridLayout(0, 1, 5, 5));
-        p.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-        JTextField tf = new JTextField(20), auth = new JTextField(20);
-        JComboBox<String> type = new JComboBox<>(new String[]{"book","speaking"});
-        p.add(new JLabel("Abstract Title:")); p.add(tf);
-        p.add(new JLabel("Type:")); p.add(type);
-        p.add(new JLabel("Authors (comma separated):")); p.add(auth);
-       
-        String content = "";
-       
-        if (method == 0) {
-            JTextField path = new JTextField(20);
-            p.add(new JLabel("File Path:")); p.add(path);
+        private static void addAbstract() {
+            String[] inputMethods = {"Load from .txt file", "Type / paste manually"};
+            int method = JOptionPane.showOptionDialog(null, "How do you want to provide the abstract text?", "Add Abstract",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, inputMethods, inputMethods[0]);
+            if (method < 0) return;
+
+            // --- Build shared panel ---
+            JPanel p = new JPanel(new GridBagLayout());
+            p.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(3, 3, 3, 3);
+            gbc.anchor = GridBagConstraints.WEST;
+
+            JTextField tf   = new JTextField(15);
+            JTextField auth = new JTextField(15);
+            JComboBox<String> type = new JComboBox<>(new String[]{"book", "speaking"});
+
+            String[][] labelRows = {{"Title:", "Type:", "Authors:"}};
+            Component[] fields   = {tf, type, auth};
+            for (int i = 0; i < fields.length; i++) {
+                gbc.gridx = 0; gbc.gridy = i; p.add(new JLabel(labelRows[0][i]), gbc);
+                gbc.gridx = 1;                 p.add(fields[i], gbc);
+            }
+
+            JLabel hint = new JLabel("(comma separated: John Doe, Jane Smith)");
+            hint.setFont(new Font("Arial", Font.ITALIC, 10));
+            hint.setForeground(Color.GRAY);
+            gbc.gridx = 1; gbc.gridy = 3;
+            p.add(hint, gbc);
+
+            // --- Method-specific input widget ---
+            JTextField  pathField = (method == 0) ? new JTextField(15) : null;
+            JTextArea   ta        = (method == 1) ? new JTextArea(5, 30) : null;
+
+            gbc.gridx = 0; gbc.gridy = 4;
+            if (method == 0) {
+                p.add(new JLabel("File Path:"), gbc);
+                gbc.gridx = 1; p.add(pathField, gbc);
+            } else {
+                ta.setWrapStyleWord(true); ta.setLineWrap(true);
+                ta.setFont(new Font("Monospaced", Font.PLAIN, 11));
+                JScrollPane sp = new JScrollPane(ta);
+                sp.setPreferredSize(new Dimension(300, 100));
+                p.add(new JLabel("Abstract Text:"), gbc);
+                gbc.gridx = 1; p.add(sp, gbc);
+            }
+
             if (JOptionPane.showConfirmDialog(null, p, "Add Abstract", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
             if (tf.getText().trim().isEmpty()) { error("Title required!"); return; }
+
+            // --- Resolve content (unified) ---
+            String content;
             try {
-                content = new String(Files.readAllBytes(Paths.get(path.getText().trim())));
-                if (!auth.getText().trim().isEmpty()) content = "Authors: " + auth.getText().trim() + "\n\n" + content;
-                int id = db.insertAbstract(faculty.facultyId, tf.getText().trim(), (String)type.getSelectedItem(), content);
-                success("Abstract added! ID: " + id);
-            } catch (IOException e) { error("File not found!"); }
-            catch (Exception e) { error("Error: " + e.getMessage()); }
-        } else {
-            JTextArea ta = new JTextArea(10, 40);
-            ta.setWrapStyleWord(true); ta.setLineWrap(true);
-            ta.setFont(new Font("Monospaced", Font.PLAIN, 12));
-            p.add(new JLabel("Abstract Text:"));
-            p.add(new JScrollPane(ta));
-            if (JOptionPane.showConfirmDialog(null, p, "Add Abstract", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
-            if (tf.getText().trim().isEmpty()) { error("Title required!"); return; }
-            content = ta.getText();
+                content = (method == 0)
+                    ? new String(Files.readAllBytes(Paths.get(pathField.getText().trim())))
+                    : ta.getText();
+            } catch (IOException e) { error("File not found!"); return; }
+
             if (content.trim().isEmpty()) { error("Abstract content cannot be empty!"); return; }
             if (!auth.getText().trim().isEmpty()) content = "Authors: " + auth.getText().trim() + "\n\n" + content;
+
+            // --- Insert (unified) ---
             try {
-                int id = db.insertAbstract(faculty.facultyId, tf.getText().trim(), (String)type.getSelectedItem(), content);
+                int id = db.insertAbstract(faculty.facultyId, tf.getText().trim(), (String) type.getSelectedItem(), content);
                 success("Abstract added! ID: " + id);
             } catch (Exception e) { error("Error: " + e.getMessage()); }
         }
-    }
 
 
-    private static void updateAbstract() {
-        try {
-            var list = db.getAbstractsByFaculty(faculty.facultyId);
-            if (list.isEmpty()) { info("No abstracts to update."); return; }
-            String[] titles = list.stream().map(a -> a.title).toArray(String[]::new);
-            String sel = (String) JOptionPane.showInputDialog(null, "Select abstract to update:", "Update Abstract", JOptionPane.PLAIN_MESSAGE, null, titles, titles[0]);
-            if (sel == null) return;
-            var abs = list.stream().filter(a -> a.title.equals(sel)).findFirst().get();
-            JPanel p = new JPanel(new GridLayout(0,1,5,5));
-            JTextField tf = new JTextField(abs.title, 20);
-            JComboBox<String> typeBox = new JComboBox<>(new String[]{"book","speaking"}); typeBox.setSelectedItem(abs.abstractType);
-            JTextArea ca = new JTextArea(abs.abstractContent, 10, 40); ca.setWrapStyleWord(true); ca.setLineWrap(true);
-            p.add(new JLabel("Title:")); p.add(tf); p.add(new JLabel("Type:")); p.add(typeBox);
-            p.add(new JLabel("Content:")); p.add(new JScrollPane(ca));
-            if (JOptionPane.showConfirmDialog(null, p, "Update Abstract", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-                db.updateAbstract(abs.abstractId, tf.getText().trim(), (String)typeBox.getSelectedItem(), ca.getText()); success("Abstract updated!");
-            }
-        } catch (Exception e) { error("Error: " + e.getMessage()); }
-    }
+            private static void updateAbstract() {
+            try {
+                var list = db.getAbstractsByFaculty(faculty.facultyId);
+                if (list.isEmpty()) { info("No abstracts to update."); return; }
 
+                String[] titles = list.stream().map(a -> a.title).toArray(String[]::new);
+                String sel = (String) JOptionPane.showInputDialog(null, "Select abstract to update:",
+                    "Update Abstract", JOptionPane.PLAIN_MESSAGE, null, titles, titles[0]);
+                if (sel == null) return;
+
+                var abs = list.stream().filter(a -> a.title.equals(sel)).findFirst().get();
+
+                // --- Build panel ---
+                JPanel p = new JPanel(new GridBagLayout());
+                p.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+                GridBagConstraints gbc = new GridBagConstraints();
+                gbc.insets = new Insets(3, 3, 3, 3);
+                gbc.anchor = GridBagConstraints.WEST;
+
+                JTextField tf = new JTextField(abs.title, 15);
+                JComboBox<String> typeBox = new JComboBox<>(new String[]{"book", "speaking"});
+                typeBox.setSelectedItem(abs.abstractType);
+
+                JTextArea ca = new JTextArea(abs.abstractContent, 5, 30);
+                ca.setWrapStyleWord(true); ca.setLineWrap(true);
+                ca.setFont(new Font("Monospaced", Font.PLAIN, 11));
+                JScrollPane sp = new JScrollPane(ca);
+                sp.setPreferredSize(new Dimension(300, 100));
+
+                String[] labels = {"Title:", "Type:", "Content:"};
+                Component[] fields = {tf, typeBox, sp};
+                for (int i = 0; i < labels.length; i++) {
+                    gbc.gridx = 0; gbc.gridy = i; p.add(new JLabel(labels[i]), gbc);
+                    gbc.gridx = 1;               p.add(fields[i], gbc);
+                }
+
+                if (JOptionPane.showConfirmDialog(null, p, "Update Abstract", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    db.updateAbstract(abs.abstractId, tf.getText().trim(), (String) typeBox.getSelectedItem(), ca.getText());
+                    success("Abstract updated!");
+                }
+            } catch (Exception e) { error("Error: " + e.getMessage()); }
+        }
 
     private static void deleteAbstract() {
         try {
