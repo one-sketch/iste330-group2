@@ -6,11 +6,11 @@
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -432,7 +432,6 @@ public class Datalayer {
             abstracts_deleted = 1;
         } catch(SQLException e){
             System.out.println("Error in deleteAbstract: " + e.getMessage());
-            
         }
         return abstracts_deleted;
     }
