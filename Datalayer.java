@@ -1,7 +1,11 @@
 // DataLayer.java
-// Author: GROUP2 
-// Date: april 10 2026
-// SKELETON VERSION 
+// Authors: GROUP 2
+// Kylie Higgins
+// Kaylie Chiodi
+// Justen Jiang
+// Jordan Ciferni
+// Chris Donalds
+// Date: april 15 2026
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

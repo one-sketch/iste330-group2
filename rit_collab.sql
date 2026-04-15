@@ -1,3 +1,13 @@
+-- rit_collab.sql
+-- Authors: GROUP 2
+-- Kylie Higgins
+-- Kaylie Chiodi
+-- Justen Jiang 
+-- Alex Guan
+-- Jordan Ciferni
+-- Chris Donalds
+-- Date: April 15, 2026
+
 DROP DATABASE IF EXISTS rit_collab;
 CREATE DATABASE rit_collab;
 USE rit_collab;

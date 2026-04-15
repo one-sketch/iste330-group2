@@ -1,5 +1,12 @@
 // PresentationLayer.java
-// Author: GROUP2 
+// Authors: GROUP 2
+// Kylie Higgins
+// Kaylie Chiodi
+// Justen Jiang
+// Alex Guan
+// Jordan Ciferni
+// Chris Donalds
+ 
 // Date: April 15, 2026
 
 import javax.swing.*;
