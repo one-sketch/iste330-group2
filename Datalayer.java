@@ -314,7 +314,7 @@ public class Datalayer {
         String sql = "SELECT * FROM rit_collab.Guest WHERE account_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1,accountId);
-            ResultSet resultSet = stmt.executeQuery(sql);
+            ResultSet resultSet = stmt.executeQuery();
 
             resultSet.next();
             return mapGuest(resultSet);
