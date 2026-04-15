@@ -26,7 +26,7 @@ public class PresentationLayer {
     public static void main(String[] args) {
         JPanel panel = new JPanel(new GridLayout(0, 1, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        JTextField userField = new JTextField("root", 15);
+        JTextField userField = new JTextField( 15);
         JPasswordField passField = new JPasswordField(15);
         panel.add(new JLabel("DB Username:")); panel.add(userField);
         panel.add(new JLabel("DB Password:")); panel.add(passField);
