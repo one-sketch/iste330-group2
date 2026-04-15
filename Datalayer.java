@@ -290,7 +290,7 @@ public class Datalayer {
         String sql = "SELECT * FROM rit_collab.Faculty WHERE account_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1,accountId);
-            ResultSet resultSet = stmt.executeQuery(sql);
+            ResultSet resultSet = stmt.executeQuery();
 
             resultSet.next();
             return mapFaculty(resultSet);
@@ -302,7 +302,7 @@ public class Datalayer {
         String sql = "SELECT * FROM rit_collab.Student WHERE account_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1,accountId);
-            ResultSet resultSet = stmt.executeQuery(sql);
+            ResultSet resultSet = stmt.executeQuery();
 
             resultSet.next();
             return mapStudent(resultSet);
@@ -347,12 +347,66 @@ public class Datalayer {
      * Insert abstract from file content or typed text.
      * abstractType must be "book" or "speaking".
      */
-    public int insertAbstract(int facultyId, String title, String abstractType, String content) throws SQLException {
-        // TODO: Insert new abstract
-        return -1;
-    }
+        public int insertAbstract(int facultyId, String title, String abstractType, String content) throws SQLException {
+            abstractType = abstractType.toLowerCase().trim();
+            if (!abstractType.equals("book") && !abstractType.equals("speaking")) {
+                System.out.println("Invalid Abstract Type");
+                return -1;
+            }
+            
+            String sql = "INSERT INTO abstract (title, abstract_type, abstract_content) VALUES (?,?,?)";
+            try {
+                PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, title);
+                ps.setString(2, abstractType);
+                ps.setString(3, content);
+                
+                int result = ps.executeUpdate();
+                
+                if (result == 0) {
+                    throw new SQLException("Failed to insert");
+                }
+                
+                // Get the generated abstract ID
+                ResultSet keys = ps.getGeneratedKeys();
+                if (keys.next()) {
+                    int newId = keys.getInt(1);
+                    // Link to faculty
+                    addFacultyAbstract(newId, facultyId);
+                    return newId;
+                }
+                
+                return result;
+                
+            } catch (SQLException sqle) {
+                System.out.println("Error in insertAbstract");
+                System.out.println(sqle);
+                return -1;
+            }
+        }
+    public int addFacultyAbstract(int abstractID, int facultyID) {
+        String sql = "INSERT INTO Faculty_Abstract (abstract_id, faculty_id) VALUES (?,?)";
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, abstractID);
+            ps.setInt(2, facultyID);
 
-   public void updateAbstract(int abstractId, String title, String abstractType, String content) throws SQLException {
+            int result = ps.executeUpdate();
+
+            if (result == 0) {
+                throw new SQLException("Failed to insert");
+            }
+            return result;
+
+        } catch (SQLException sqle) {
+            System.out.println("Error in addFacultyAbstract");
+            System.out.println(sqle);
+            return -1;
+        }
+
+    } 
+
+    public void updateAbstract(int abstractId, String title, String abstractType, String content) throws SQLException {
         String sql = "UPDATE abstract SET title = ?, abstract_type = ?, abstract_content = ? WHERE abstract_id = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -394,7 +448,21 @@ public class Datalayer {
         }
         return list;
     }
+        // Student interest
+        public List<Interest> getStudentInterests(int studentId) throws SQLException {
+            List<Interest> list = new ArrayList<>();
+            String sql = "SELECT i.* FROM Interest i JOIN Student_Interest si ON i.interest_id = si.interest_id WHERE si.student_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    list.add(new Interest(rs.getInt("interest_id"), rs.getString("interest_word")));
+                }
+            }
+            return list;
+        }
 
+       
     public int addFacultyInterest(int facultyId, List<String> words) throws SQLException {
         int interests_added = 0; 
         String sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
@@ -446,11 +514,19 @@ public class Datalayer {
         return interests_deleted;
     }
 
-    // INTERESTS — Student
-    public List<Interest> getStudentInterests(int studentId) throws SQLException {
-        // TODO: Retrieve student interests
-        return new ArrayList<>();
-    }
+    // INTERESTS — Public users
+        public List<Interest> getGuestInterests(int guestId) throws SQLException {
+            List<Interest> list = new ArrayList<>();
+            String sql = "SELECT i.* FROM Interest i JOIN Guest_Interest gi ON i.interest_id = gi.interest_id WHERE gi.guest_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, guestId);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    list.add(new Interest(rs.getInt("interest_id"), rs.getString("interest_word")));
+                }
+            }
+            return list;
+        }
 
     public int addStudentInterest(int studentId, List<String> words) throws SQLException {
         int interests_added = 0; 
@@ -556,7 +632,10 @@ public class Datalayer {
     // Faculty: search students by interest keyword
     public List<Student> searchStudentsByInterest(String keyword) throws SQLException {
         List<Student> list = new ArrayList<>();
-        String sql = "SELECT * FROM student JOIN student_interest USING (student_id) JOIN interest USING (interest_id) WHERE interest_word = LOWER(?)";
+        String sql = "SELECT student_id, CONCAT(fname, ' ', lname) AS name, email, phone " +
+            "FROM student JOIN student_interest USING (student_id) " +
+            "JOIN interest USING (interest_id) " +
+            "WHERE interest_word = LOWER(?)";
         String lower_keyword = keyword.toLowerCase();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, lower_keyword);
@@ -580,9 +659,17 @@ public class Datalayer {
     }
 
     // Faculty: auto-match students who share interests 
-    public List<Student> matchStudentsByFacultyInterest(int facultyId) throws SQLException {
-        // TODO: Match students with faculty interests
-        return new ArrayList<>();
+   public List<Student> matchStudentsByFacultyInterest(int facultyId) throws SQLException {
+        List<Student> list = new ArrayList<>();
+        String sql = "SELECT DISTINCT s.* FROM Student s " +
+                     "JOIN Student_Interest si ON s.student_id=si.student_id " +
+                     "JOIN Faculty_interest fi ON si.interest_id=fi.interest_id WHERE fi.faculty_id=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, facultyId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(mapStudent(rs));
+        }
+        return list;
     }
 
     /**
@@ -591,7 +678,9 @@ public class Datalayer {
      */
     public List<Faculty> searchFacultyByKeyword(String keyword) throws SQLException {
         List<Faculty> list = new ArrayList<>();
-        String sql = "SELECT * FROM faculty JOIN faculty_interest USING (faculty_id) JOIN interest USING (interest_id) WHERE interest_word = LOWER(?)";
+        String sql = "SELECT CONCAT(fname, ' ', lname) AS name, building, office_number, email " + 
+            "FROM faculty JOIN faculty_interest USING (faculty_id) JOIN interest USING (interest_id) " + 
+            "WHERE interest_word = LOWER(?)";
         String lower_keyword = keyword.toLowerCase();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, lower_keyword);
