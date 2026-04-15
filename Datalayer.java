@@ -380,7 +380,29 @@ public class Datalayer {
         } 
     }
 
-   public void updateAbstract(int abstractId, String title, String abstractType, String content) throws SQLException {
+    public int addFacultyAbstract(int abstractID, int facultyID) {
+        String sql = "INSERT INTO Faculty_Abstract (abstract_id, faculty_id) VALUES (?,?)";
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, abstractID);
+            ps.setInt(2, facultyID);
+
+            int result = ps.executeUpdate();
+
+            if (result == 0) {
+                throw new SQLException("Failed to insert");
+            }
+            return result;
+
+        } catch (SQLException sqle) {
+            System.out.println("Error in addFacultyAbstract");
+            System.out.println(sqle);
+            return -1;
+        }
+
+    } 
+
+    public void updateAbstract(int abstractId, String title, String abstractType, String content) throws SQLException {
         String sql = "UPDATE abstract SET title = ?, abstract_type = ?, abstract_content = ? WHERE abstract_id = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
