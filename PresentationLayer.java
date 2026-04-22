@@ -203,14 +203,20 @@ public class PresentationLayer {
 
     //  SHARED ABSTRACT VIEWS 
     private static void seeAllAbstracts() {
-        try {
-            var list = db.getAllAbstracts();
-            if (list.isEmpty()) { info("No abstracts found."); return; }
-            StringBuilder sb = new StringBuilder("ALL FACULTY ABSTRACTS\n\n");
-            list.forEach(a -> sb.append("Title: ").append(a.title).append("\nType: ").append(a.abstractType).append("\nContent:\n").append(a.abstractContent).append("\n---\n\n"));
-            showScrollableText("All Abstracts", sb.toString());
-        } catch (Exception e) { error("Error: " + e.getMessage()); }
-    }
+    try {
+        var list = db.getAllAbstracts();
+        if (list.isEmpty()) { info("No abstracts found."); return; }
+        StringBuilder sb = new StringBuilder("ALL FACULTY ABSTRACTS\n\n");
+        for (var a : list) {
+            sb.append("Title: ").append(a.title).append("\n");
+            sb.append("Authors: ").append(a.authors).append("\n");  // ADD THIS LINE
+            sb.append("Type: ").append(a.abstractType).append("\n");
+            sb.append("Content:\n").append(a.abstractContent).append("\n");
+            sb.append("---\n\n");
+        }
+        showScrollableText("All Abstracts", sb.toString());
+    } catch (Exception e) { error("Error: " + e.getMessage()); }
+}
 
 
     //  FACULTY MENU 
@@ -234,12 +240,18 @@ public class PresentationLayer {
     }
 
 
-    private static void viewMyAbstracts() {
+        private static void viewMyAbstracts() {
         try {
             var list = db.getAbstractsByFaculty(faculty.facultyId);
             if (list.isEmpty()) { info("No abstracts found."); return; }
             StringBuilder sb = new StringBuilder("YOUR ABSTRACTS\n\n");
-            list.forEach(a -> sb.append("Title: ").append(a.title).append("\nType: ").append(a.abstractType).append("\nContent:\n").append(a.abstractContent).append("\n---\n\n"));
+            for (var a : list) {
+                sb.append("Title: ").append(a.title).append("\n");
+                sb.append("Authors: ").append(a.authors).append("\n");  // ADD THIS LINE
+                sb.append("Type: ").append(a.abstractType).append("\n");
+                sb.append("Content:\n").append(a.abstractContent).append("\n");
+                sb.append("---\n\n");
+            }
             showScrollableText("My Abstracts", sb.toString());
         } catch (Exception e) { error("Error: " + e.getMessage()); }
     }
@@ -324,7 +336,9 @@ public class PresentationLayer {
 
             // --- Insert (unified) ---
             try {
-                int id = db.insertAbstract(faculty.facultyId, tf.getText().trim(), (String) type.getSelectedItem(), content);
+                // In addAbstract() method, when calling insertAbstract:
+                int id = db.insertAbstract(faculty.facultyId, tf.getText().trim(), auth.getText().trim(),  
+                 (String)type.getSelectedItem(), content);
                 success("Abstract added! ID: " + id);
             } catch (Exception e) { error("Error: " + e.getMessage()); }
         }

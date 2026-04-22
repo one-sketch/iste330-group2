@@ -185,15 +185,21 @@ public class Datalayer {
     }
 
     public static class Abstract {
-        public int    abstractId;
-        public String title, abstractType, abstractContent;
-        public Abstract(int id, String t, String type, String content) {
-            abstractId=id; title=t; abstractType=type; abstractContent=content;
-        }
-        public String toString() {
-             return "[" + abstractId + "] " + title + " (" + abstractType + ")"; 
-            }
+    public int abstractId;
+    public String title, authors, abstractType, abstractContent;  // ADDED authors field
+    
+    public Abstract(int id, String t, String auth, String type, String content) {
+        abstractId = id; 
+        title = t; 
+        authors = auth;      // ADD THIS
+        abstractType = type; 
+        abstractContent = content;
     }
+    
+    public String toString() {
+        return "[" + abstractId + "] " + title + " by " + authors + " (" + abstractType + ")";
+    }
+}
 
     public static class Interest {
         public int    interestId;
@@ -326,68 +332,61 @@ public class Datalayer {
     }
 
     // ABSTRACTS — Faculty 
-   public List<Abstract> getAllAbstracts() throws SQLException {
-        List<Abstract> list = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM abstract ORDER BY abstract_id")) {
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(mapAbstract(rs));
+   public List<Abstract> getAllAbstracts() {
+    List<Abstract> list = new ArrayList<>();
+    String sql = "SELECT abstract_id, title, authors, abstract_type, abstract_content FROM abstract ORDER BY abstract_id";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            list.add(mapAbstract(rs));
         }
-        return list;
+    } catch (SQLException e) {
+        System.out.println("Error in getAllAbstracts: " + e.getMessage());
     }
+    return list;
+}
 
-     public List<Abstract> getAbstractsByFaculty(int facultyId) throws SQLException {
-        List<Abstract> list = new ArrayList<>();
-        String sql = "SELECT a.* FROM abstract a JOIN Faculty_Abstract fa ON a.abstract_id=fa.abstract_id WHERE fa.faculty_id=?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, facultyId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(mapAbstract(rs));
+     public List<Abstract> getAbstractsByFaculty(int facultyId) {
+    List<Abstract> list = new ArrayList<>();
+    String sql = "SELECT a.abstract_id, a.title, a.authors, a.abstract_type, a.abstract_content " +
+                 "FROM abstract a JOIN Faculty_Abstract fa ON a.abstract_id = fa.abstract_id " +
+                 "WHERE fa.faculty_id = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, facultyId);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            list.add(mapAbstract(rs));
         }
-        return list;
+    } catch (SQLException e) {
+        System.out.println("Error in getAbstractsByFaculty: " + e.getMessage());
     }
+    return list;
+}
 
 
     /**
      * Insert abstract from file content or typed text.
      * abstractType must be "book" or "speaking".
      */
-        public int insertAbstract(int facultyId, String title, String abstractType, String content) throws SQLException {
-            abstractType = abstractType.toLowerCase().trim();
-            if (!abstractType.equals("book") && !abstractType.equals("speaking")) {
-                System.out.println("Invalid Abstract Type");
-                return -1;
+        public int insertAbstract(int facultyId, String title, String authors, String abstractType, String content) {
+        String sql = "INSERT INTO abstract (title, authors, abstract_type, abstract_content) VALUES (?,?,?,?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, title);
+            ps.setString(2, authors);      // ADD THIS
+            ps.setString(3, abstractType);
+            ps.setString(4, content);
+            ps.executeUpdate();
+            ResultSet keys = ps.getGeneratedKeys();
+            if (keys.next()) {
+                int newId = keys.getInt(1);
+                addFacultyAbstract(newId, facultyId);
+                return newId;
             }
-            
-            String sql = "INSERT INTO abstract (title, abstract_type, abstract_content) VALUES (?,?,?)";
-            try {
-                PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-                ps.setString(1, title);
-                ps.setString(2, abstractType);
-                ps.setString(3, content);
-                
-                int result = ps.executeUpdate();
-                
-                if (result == 0) {
-                    throw new SQLException("Failed to insert");
-                }
-                
-                // Get the generated abstract ID
-                ResultSet keys = ps.getGeneratedKeys();
-                if (keys.next()) {
-                    int newId = keys.getInt(1);
-                    // Link to faculty
-                    addFacultyAbstract(newId, facultyId);
-                    return newId;
-                }
-                
-                return result;
-                
-            } catch (SQLException sqle) {
-                System.out.println("Error in insertAbstract");
-                System.out.println(sqle);
-                return -1;
-            }
+        } catch (SQLException e) {
+            System.out.println("Error in insertAbstract: " + e.getMessage());
         }
+        return -1;
+    }
     public int addFacultyAbstract(int abstractID, int facultyID) {
         String sql = "INSERT INTO Faculty_Abstract (abstract_id, faculty_id) VALUES (?,?)";
         try {
@@ -791,7 +790,12 @@ public class Datalayer {
             rs.getString("company_name"), rs.getString("email"));
     }
     private Abstract mapAbstract(ResultSet rs) throws SQLException {
-        return new Abstract(rs.getInt("abstract_id"), rs.getString("title"),
-            rs.getString("abstract_type"), rs.getString("abstract_content"));
-    }
+    return new Abstract(
+        rs.getInt("abstract_id"),
+        rs.getString("title"),
+        rs.getString("authors"),      // ADD THIS LINE
+        rs.getString("abstract_type"),
+        rs.getString("abstract_content")
+    );
+}
 }
