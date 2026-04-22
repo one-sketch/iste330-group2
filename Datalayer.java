@@ -19,12 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Datalayer {
-   private final String DRIVER = "com.mysql.cj.jdbc.Driver";
    private final String DBURL = "jdbc:mysql://localhost/";
 
     private Connection conn;
-    private String dbUser;
-    private String dbPass;
+
 
     //Initialize
     public Datalayer(String dbName, String user, String password) {

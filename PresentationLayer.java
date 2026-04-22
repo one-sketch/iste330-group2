@@ -471,24 +471,6 @@ private static void deleteAllFacultyInterests(int facultyId) throws Exception {
     }
 }
 
-    private static void deleteFacultyInterest() {
-        try {
-            var interests = db.getFacultyInterests(faculty.facultyId);
-            if (interests.isEmpty()) { info("No interests to delete."); return; }
-            String[] arr = interests.stream().map(i -> i.interestWord).toArray(String[]::new);
-            String sel = (String) JOptionPane.showInputDialog(null, "Select interest to DELETE:", "Delete Interest", JOptionPane.PLAIN_MESSAGE, null, arr, arr[0]);
-            if (sel == null) return;
-            Optional<Datalayer.Interest> found = interests.stream().filter(i -> i.interestWord.equals(sel)).findFirst();
-            if (!found.isPresent()) return;
-            if (JOptionPane.showConfirmDialog(null, "Delete \"" + sel + "\"?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                db.deleteFacultyInterest(faculty.facultyId, found.get().interestId);
-                int remaining = db.getFacultyInterests(faculty.facultyId).size();
-                success("Interest deleted! You now have " + remaining + "/3 interests.");
-            }
-        } catch (Exception e) { error("Error: " + e.getMessage()); }
-    }
-
-
     private static void searchStudentByName() {
         String name = JOptionPane.showInputDialog(null, "Enter student name:", "Search Student", JOptionPane.QUESTION_MESSAGE);
         if (name == null) return;
