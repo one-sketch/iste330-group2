@@ -66,36 +66,47 @@ public class PresentationLayer {
         panel.add(lbl);
         panel.add(Box.createRigidArea(new Dimension(0, 15)));
 
-
         ButtonGroup bg = new ButtonGroup();
         JRadioButton[] btns = new JRadioButton[options.length];
         for (int i = 0; i < options.length; i++) {
             btns[i] = new JRadioButton(options[i]);
             btns[i].setAlignmentX(Component.CENTER_ALIGNMENT);
-            bg.add(btns[i]); panel.add(btns[i]);
+            bg.add(btns[i]); 
+            panel.add(btns[i]);
             panel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
         btns[0].setSelected(true);
 
-
-        JButton ok = new JButton("OK"), cancel = new JButton("Cancel");
-        JPanel btnRow = new JPanel(); btnRow.setLayout(new BoxLayout(btnRow, BoxLayout.X_AXIS));
-        btnRow.add(ok); btnRow.add(Box.createRigidArea(new Dimension(10, 0))); btnRow.add(cancel);
+        // Only OK and Cancel buttons - NO cancel menu option needed
+        JButton ok = new JButton("OK");
+        JButton cancel = new JButton("Cancel");
+        JPanel btnRow = new JPanel(); 
+        btnRow.setLayout(new BoxLayout(btnRow, BoxLayout.X_AXIS));
+        btnRow.add(ok);
+        btnRow.add(Box.createRigidArea(new Dimension(10, 0)));
+        btnRow.add(cancel);
         btnRow.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panel.add(Box.createRigidArea(new Dimension(0, 10))); panel.add(btnRow);
-
+        panel.add(Box.createRigidArea(new Dimension(0, 10))); 
+        panel.add(btnRow);
 
         final int[] sel = {-1};
         ok.addActionListener(e -> {
-            for (int i = 0; i < btns.length; i++) if (btns[i].isSelected()) { sel[0] = i; break; }
+            for (int i = 0; i < btns.length; i++) {
+                if (btns[i].isSelected()) { 
+                    sel[0] = i; 
+                    break; 
+                }
+            }
             SwingUtilities.getWindowAncestor(panel).dispose();
         });
-        cancel.addActionListener(e -> SwingUtilities.getWindowAncestor(panel).dispose());
-
+        cancel.addActionListener(e -> {
+            SwingUtilities.getWindowAncestor(panel).dispose();
+        });
 
         JOptionPane op = new JOptionPane(panel, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{});
         JDialog dlg = op.createDialog(title);
-        dlg.setModal(true); dlg.setVisible(true);
+        dlg.setModal(true); 
+        dlg.setVisible(true);
         return sel[0];
     }
 
@@ -221,23 +232,26 @@ public class PresentationLayer {
 
     //  FACULTY MENU 
     private static void showFacultyMenu() {
-        String[] opts = {"See All Faculty Abstracts","View My Abstracts","View My Interests","Add Abstract","Update Abstract","Delete Abstract","Update Interest","Delete Interest","Search Student By Name","Search by Interest/Abstract","Match by Interest","Logout"};
-        while (true) {
-            int c = showVerticalMenu("Faculty Menu", "Welcome " + faculty.getFullName(), opts);
-            if      (c == 0)  seeAllAbstracts();
-            else if (c == 1)  viewMyAbstracts();
-            else if (c == 2)  viewMyInterests();
-            else if (c == 3)  addAbstract();
-            else if (c == 4)  updateAbstract();
-            else if (c == 5)  deleteAbstract();
-            else if (c == 6)  updateFacultyInterest();
-            else if (c == 7)  deleteFacultyInterest();
-            else if (c == 8)  searchStudentByName();
-            else if (c == 9)  searchByInterestOrAbstract();
-            else if (c == 10) matchByInterest();
-            else break;
-        }
+    // REMOVED "Delete Interest" - it's already inside Update Interest
+    String[] opts = {"See All Faculty Abstracts","View My Abstracts","View My Interests",
+                     "Add Abstract","Update Abstract","Delete Abstract",
+                     "Update Interest",  // This already has Add AND Delete options
+                     "Search Student By Name","Search by Interest/Abstract","Match by Interest","Logout"};
+    while (true) {
+        int c = showVerticalMenu("Faculty Menu", "Welcome " + faculty.getFullName(), opts);
+        if      (c == 0)  seeAllAbstracts();
+        else if (c == 1)  viewMyAbstracts();
+        else if (c == 2)  viewMyInterests();
+        else if (c == 3)  addAbstract();
+        else if (c == 4)  updateAbstract();
+        else if (c == 5)  deleteAbstract();
+        else if (c == 6)  updateFacultyInterest();  // This handles both add and delete
+        else if (c == 7)  searchStudentByName();
+        else if (c == 8)  searchByInterestOrAbstract();
+        else if (c == 9)  matchByInterest();
+        else break;
     }
+}
 
 
         private static void viewMyAbstracts() {
@@ -408,7 +422,8 @@ private static void updateFacultyInterest() {
         int currentCount = current.size();
         List<String> words = current.stream().map(i -> i.interestWord).collect(Collectors.toList());
         
-        String[] opts = {"Add New Interest", "Delete an Interest", "Cancel"};
+        // Only Add and Delete options - NO Cancel menu option (button handles cancel)
+        String[] opts = {"Add New Interest", "Delete an Interest"};
         int choice = showVerticalMenu("Update Interest", "You have " + currentCount + "/3 interests. Faculty must have exactly 3.", opts);
         
         if (choice == 0) { // Add
@@ -419,7 +434,6 @@ private static void updateFacultyInterest() {
             String newInterest = JOptionPane.showInputDialog(null, "Enter new interest (1-3 words):", "Add Interest", JOptionPane.QUESTION_MESSAGE);
             if (newInterest != null && !newInterest.trim().isEmpty()) {
                 words.add(newInterest.trim());
-                // Delete all existing first, then add the new list
                 deleteAllFacultyInterests(faculty.facultyId);
                 for (String word : words) {
                     List<String> single = new ArrayList<>();
@@ -435,7 +449,6 @@ private static void updateFacultyInterest() {
             if (sel != null) {
                 if (JOptionPane.showConfirmDialog(null, "Delete \"" + sel + "\"?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     words.remove(sel);
-                    // Delete all existing first, then add the new list
                     deleteAllFacultyInterests(faculty.facultyId);
                     for (String word : words) {
                         List<String> single = new ArrayList<>();
@@ -446,6 +459,7 @@ private static void updateFacultyInterest() {
                 }
             }
         }
+        // choice == -1 means user clicked Cancel button - just return
     } catch (Exception e) { error("Error: " + e.getMessage()); }
 }
 
@@ -479,10 +493,28 @@ private static void deleteAllFacultyInterests(int facultyId) throws Exception {
         String name = JOptionPane.showInputDialog(null, "Enter student name:", "Search Student", JOptionPane.QUESTION_MESSAGE);
         if (name == null) return;
         try {
-            var list = db.searchStudentsByName(name);
-            if (list.isEmpty()) { info("No students found."); return; }
+            var students = db.searchStudentsByName(name);
+            if (students.isEmpty()) { info("No students found."); return; }
             StringBuilder sb = new StringBuilder("STUDENTS FOUND\n\n");
-            list.forEach(s -> sb.append("Name: ").append(s.getFullName()).append("\nEmail: ").append(s.email).append("\nPhone: ").append(s.phone).append("\n---\n"));
+            for (var s : students) {
+                sb.append("Name: ").append(s.getFullName()).append("\n");
+                sb.append("Email: ").append(s.email).append("\n");
+                sb.append("Phone: ").append(s.phone).append("\n");
+                
+                // ADDED: Show student interests
+                var interests = db.getStudentInterests(s.studentId);
+                if (!interests.isEmpty()) {
+                    sb.append("Interests: ");
+                    for (int i = 0; i < interests.size(); i++) {
+                        sb.append(interests.get(i).interestWord);
+                        if (i < interests.size() - 1) sb.append(", ");
+                    }
+                    sb.append("\n");
+                } else {
+                    sb.append("Interests: None\n");
+                }
+                sb.append("---\n");
+            }
             JOptionPane.showMessageDialog(null, sb.toString(), "Search Results", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception e) { error("Error: " + e.getMessage()); }
     }
@@ -587,7 +619,7 @@ private static void deleteAllStudentInterests(int studentId) throws Exception {
 
     //  GUEST MENU 
     private static void showGuestMenu() {
-        String[] opts = {"See All Faculty Abstracts","View My Interests","Update Interest","Delete Interest","Search by Interest/Abstract","Match Faculty by Interest","Match Student by Interest","Logout"};
+        String[] opts = {"See All Faculty Abstracts","View My Interests","Add Interest","Delete Interest","Search by Interest/Abstract","Match Faculty by Interest","Match Student by Interest","Logout"};
         while (true) {
             int c = showVerticalMenu("Guest Menu", "Welcome " + guest.getDisplayName(), opts);
             if      (c == 0) seeAllAbstracts();
