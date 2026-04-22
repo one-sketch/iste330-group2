@@ -530,39 +530,38 @@ public class Datalayer {
             return list;
         }
 
-    public int addStudentInterest(int studentId, List<String> words) throws SQLException {
-        int interests_added = 0; 
-        String sql = "SELECT interest_id FROM interest WHERE interest_word = ?";
-        String sqlInsert = "INSERT INTO student_interest (student_id, interest_id) VALUES (?,?) ";
-
-        try { 
-            PreparedStatement pstmt = conn.prepareStatement(sql);
-            PreparedStatement psInsert = conn.prepareStatement(sqlInsert);
+    public void addStudentInterest(int studentId, List<String> words) {
+    String sqlInsert = "INSERT IGNORE INTO Student_Interest (student_id, interest_id) VALUES (?,?)";
+    try (PreparedStatement psInsert = conn.prepareStatement(sqlInsert)) {
+        for (String word : words) {
+            if (word == null || word.trim().isEmpty()) continue;
             
-            for (String word : words){
-                pstmt.setString(1, word);
-                ResultSet rs = pstmt.executeQuery();
-                
-                if (rs.next()){
-                    int interestId = rs.getInt("interest_id");
-
-                    psInsert.setInt(1, studentId); 
-                    psInsert.setInt(2, interestId);
-
-                    try {
-                        psInsert.executeUpdate();
-                        interests_added += 1;
-                    } catch (SQLException e2) {
-                        System.out.println("Error in executeUpdate in addStudentInterest: " + e2.getMessage());
-                    }
-                }
-            }
-        } catch(SQLException e){
-            System.out.println("Error in addStudentInterest: " + e.getMessage());
+            // Get or create the interest
+            int interestId = getOrCreateInterest(word.trim().toLowerCase());
+            
+            psInsert.setInt(1, studentId);
+            psInsert.setInt(2, interestId);
+            psInsert.addBatch();
         }
-        return interests_added;
+        psInsert.executeBatch();
+        System.out.println("Student interests saved successfully");
+    } catch (SQLException e) {
+        System.out.println("Error in addStudentInterest: " + e.getMessage());
     }
-
+}
+    public List<Interest> getAllInterests() {
+    List<Interest> list = new ArrayList<>();
+    String sql = "SELECT interest_id, interest_word FROM Interest ORDER BY interest_word";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            list.add(new Interest(rs.getInt("interest_id"), rs.getString("interest_word")));
+        }
+    } catch (SQLException e) {
+        System.out.println("Error in getAllInterests: " + e.getMessage());
+    }
+    return list;
+}
     public int deleteStudentInterest(int studentId, int interestId) throws SQLException {
         int interests_deleted = 0;
         String sql = "DELETE FROM student_interest WHERE student_id = ? AND interest_id = ?";

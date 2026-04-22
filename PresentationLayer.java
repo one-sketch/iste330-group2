@@ -503,62 +503,35 @@ private static void deleteAllFacultyInterests(int facultyId) throws Exception {
 
 
     //  STUDENT MENU 
-    private static void showStudentMenu() {
-        String[] opts = {"See All Faculty Abstracts","View My Interests","Update Interest","Delete Interest","Search Student By Name","Search All Interests","Search by Interest/Abstract","Match Faculty by Interest","Logout"};
-        while (true) {
-            int c = showVerticalMenu("Student Menu", "Welcome " + student.getFullName(), opts);
-            if      (c == 0) seeAllAbstracts();
-            else if (c == 1) { try { viewInterests(db.getStudentInterests(student.studentId), i -> i.interestWord); } catch (Exception e) { error(e.getMessage()); } }
-            else if (c == 2) updateStudentInterest();
-            else if (c == 3) deleteStudentInterest();
-            else if (c == 4) searchStudentByName();
-            else if (c == 5) info("Feature: View all available interests in the system.");
-            else if (c == 6) studentSearchByKeyword();
-            else if (c == 7) matchFacultyByInterest();
-            else break;
-        }
+   private static void showStudentMenu() {
+    // REMOVED "Update Interest" - split into Add and Delete
+    String[] opts = {"See All Faculty Abstracts","View My Interests","Add Interest","Delete Interest","Search All Interests","Search by Interest/Abstract","Match Faculty by Interest","Logout"};
+    while (true) {
+        int c = showVerticalMenu("Student Menu", "Welcome " + student.getFullName(), opts);
+        if (c == 0) seeAllAbstracts();
+        else if (c == 1) { try { viewInterests(db.getStudentInterests(student.studentId), i -> i.interestWord); } catch (Exception e) { error(e.getMessage()); } }
+        else if (c == 2) addStudentInterest();      // NEW - only add
+        else if (c == 3) deleteStudentInterest();   // Keep as delete
+        else if (c == 4) showAllInterests();
+        else if (c == 5) studentSearchByKeyword();
+        else if (c == 6) matchFacultyByInterest();
+        else break;
     }
-
-
-    private static void updateStudentInterest() {
+}
+private static void addStudentInterest() {
     try {
-        var current = db.getStudentInterests(student.studentId);
-        List<String> words = current.stream().map(i -> i.interestWord).collect(Collectors.toList());
-        
-        String[] opts = {"Add New Interest", "Select Existing to Update", "Cancel"};
-        int choice = showVerticalMenu("Update Interest", "You have " + words.size() + " interests", opts);
-        
-        if (choice == 0) {
-            String newInterest = JOptionPane.showInputDialog(null, "Enter new interest (1-3 words):", "Add Interest", JOptionPane.QUESTION_MESSAGE);
-            if (newInterest != null && !newInterest.trim().isEmpty()) {
-                words.add(newInterest.trim());
-                // Delete all existing first, then add the new list
-                deleteAllStudentInterests(student.studentId);
-                for (String word : words) {
-                    List<String> single = new ArrayList<>();
-                    single.add(word);
-                    db.addStudentInterest(student.studentId, single);
-                }
-                success("Interest added!");
+        String newInterest = JOptionPane.showInputDialog(null, "Enter new interest (1-3 words):", "Add Interest", JOptionPane.QUESTION_MESSAGE);
+        if (newInterest != null && !newInterest.trim().isEmpty()) {
+            var current = db.getStudentInterests(student.studentId);
+            List<String> words = current.stream().map(i -> i.interestWord).collect(Collectors.toList());
+            words.add(newInterest.trim());
+            deleteAllStudentInterests(student.studentId);
+            for (String word : words) {
+                List<String> single = new ArrayList<>();
+                single.add(word);
+                db.addStudentInterest(student.studentId, single);
             }
-        } else if (choice == 1 && !current.isEmpty()) {
-            String[] arr = words.toArray(new String[0]);
-            String sel = (String) JOptionPane.showInputDialog(null, "Select interest to update:", "Update Interest", JOptionPane.PLAIN_MESSAGE, null, arr, arr[0]);
-            if (sel != null) {
-                String nw = JOptionPane.showInputDialog(null, "Enter new interest word:", "Update Interest", JOptionPane.QUESTION_MESSAGE);
-                if (nw != null && !nw.trim().isEmpty()) {
-                    int index = words.indexOf(sel);
-                    words.set(index, nw.trim());
-                    // Delete all existing first, then add the new list
-                    deleteAllStudentInterests(student.studentId);
-                    for (String word : words) {
-                        List<String> single = new ArrayList<>();
-                        single.add(word);
-                        db.addStudentInterest(student.studentId, single);
-                    }
-                    success("Interest updated!");
-                }
-            }
+            success("Interest added!");
         }
     } catch (Exception e) { error("Error: " + e.getMessage()); }
 }
@@ -586,7 +559,17 @@ private static void deleteAllStudentInterests(int studentId) throws Exception {
             }
         } catch (Exception e) { error("Error: " + e.getMessage()); }
     }
-
+    private static void showAllInterests() {
+    try {
+        var interests = db.getAllInterests();
+        if (interests.isEmpty()) { info("No interests found in system."); return; }
+        StringBuilder sb = new StringBuilder("ALL AVAILABLE INTERESTS\n\n");
+        for (int i = 0; i < interests.size(); i++) {
+            sb.append(i+1).append(". ").append(interests.get(i).interestWord).append("\n");
+        }
+        JOptionPane.showMessageDialog(null, sb.toString(), "Interest Directory", JOptionPane.INFORMATION_MESSAGE);
+    } catch (Exception e) { error("Error: " + e.getMessage()); }
+}
 
     private static void studentSearchByKeyword() {
         String kw = JOptionPane.showInputDialog(null, "Enter keyword to search faculty:", "Search by Interest/Abstract", JOptionPane.QUESTION_MESSAGE);
