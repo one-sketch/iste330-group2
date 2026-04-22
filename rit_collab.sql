@@ -44,7 +44,7 @@ INSERT INTO Account (account_id, username, pass_hash, account_type) VALUES
     (4, 'nromanoff', '223e13aecbb316f4c02f6c3c009bf4e72a175a147fb226680a9d33c9e6dff56d', 'Faculty'),
     (5, 'swilson', '2001af5627ccb59abf03716673255e9903632d9f8c6b44c9b793b177d7f0a139', 'Faculty'),
     
-    -- Students (7 unique students - removed Tony Stark duplicate)
+    -- Students (7 unique students)
     (6, 'asmith', '7d68b8db8f2668594d540704cc44a3df7ccf1b8b534b97380371755bef02a45b', 'Student'),
     (7, 'ckent', 'e4760427c21cd06f24ad9c94da906ff659b1e1429d573fefdc3b7343bbb0e843', 'Student'),
     (8, 'pparker', 'f574a5175b6d8de2f26042e630d4b00fd52665f517d9268fd3b4fdff6c4afe0f', 'Student'),
@@ -53,11 +53,12 @@ INSERT INTO Account (account_id, username, pass_hash, account_type) VALUES
     (11, 'jbauer', '8b7628f4b6d4aa33f2e03ecc2a9d3cc7dad4841ffbd84f6ff3105d622d6baaf8', 'Student'),
     (12, 'srogers', 'a3f804fc75309fe1f09c5f4409a9e01b5eb2b5abb3ae878c1c5166ee99b6d05c', 'Student'),
     
-    -- Guests (4 unique guests - removed duplicates)
-    (13, 'guestuser', '153a255160109ee7a0981b89a9e52ad6d1a2dc4f29ac318ab6121465a04b0d1c', 'Public'),
-    (14, 'dprince_guest', '30ec70e85442080e1bc825fba723dc2062a4518b0c87fe74973106a6910f26e1', 'Public'),
-    (15, 'srogers_guest', '0e8e62cc9ac652873167dfdf0c10ce030c5793e5231ef62b8f4c739aec1a7d95', 'Public'),
-    (16, 'ckent_guest', '27d5233ddd8968526735078ca9efa95ec03a22ea942420df0841f78ca9d9c272', 'Public');
+    -- Guests (5 unique corporations)
+    (13, 'henrietta_library', '153a255160109ee7a0981b89a9e52ad6d1a2dc4f29ac318ab6121465a04b0d1c', 'Public'),
+    (14, 'amazon_inc', '30ec70e85442080e1bc825fba723dc2062a4518b0c87fe74973106a6910f26e1', 'Public'),
+    (15, 'shield_corp', '0e8e62cc9ac652873167dfdf0c10ce030c5793e5231ef62b8f4c739aec1a7d95', 'Public'),
+    (16, 'daily_planet', '27d5233ddd8968526735078ca9efa95ec03a22ea942420df0841f78ca9d9c272', 'Public'),
+    (17, 'wayne_enterprises', '2001af5627ccb59abf03716673255e9903632d9f8c6b44c9b793b177d7f0a139', 'Public');
 
 CREATE TABLE Faculty (
     faculty_id    INT PRIMARY KEY AUTO_INCREMENT,
@@ -95,7 +96,7 @@ CREATE TABLE Student (
     FOREIGN KEY (account_id) REFERENCES Account(account_id)
 );
 
--- Insert statement for student table sample data (7 unique students, no duplicates)
+-- Insert statement for student table sample data (7 unique students)
 INSERT INTO Student (student_id, account_id, fname, lname, email, phone) VALUES
     (1, 6, 'Alice', 'Smith', 'asmith@rit.edu', '585-555-1234'),
     (2, 7, 'Clark', 'Kent', 'ckent@rit.edu', '585-555-5678'),
@@ -115,14 +116,15 @@ CREATE TABLE Guest (
     FOREIGN KEY (account_id) REFERENCES Account(account_id)
 );
 
--- Insert statement for guest table sample data (4 unique guests)
+-- Insert statement for guest table sample data (5 corporations - NO personal names)
 INSERT INTO Guest (guest_id, account_id, fname, lname, company_name, email) VALUES
-    (1, 13, 'Guest', 'User', 'Henrietta Public Library', 'guestuser@gmail.com'),
-    (2, 14, 'Diana', 'Prince', 'Amazon Inc.', 'dprince@amazon.com'),
-    (3, 15, 'Steve', 'Rogers', 'Shield Corp.', 'srogers@shield.com'),
-    (4, 16, 'Clark', 'Kent', 'Daily Planet', 'ckent@dailyplanet.com');
+    (1, 13, NULL, NULL, 'Henrietta Public Library', 'contact@henriettalibrary.org'),
+    (2, 14, NULL, NULL, 'Amazon Inc.', 'info@amazon.com'),
+    (3, 15, NULL, NULL, 'Shield Corp.', 'contact@shield.com'),
+    (4, 16, NULL, NULL, 'Daily Planet', 'news@dailyplanet.com'),
+    (5, 17, NULL, NULL, 'Wayne Enterprises', 'info@wayneenterprises.com');
 
--- Add authors column to abstract table
+-- Abstract table with authors
 CREATE TABLE abstract (
     abstract_id      INT PRIMARY KEY AUTO_INCREMENT,
     title            VARCHAR(200),
@@ -228,12 +230,13 @@ CREATE TABLE Guest_Interest (
     FOREIGN KEY (interest_id) REFERENCES Interest(interest_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Insert statement for guest_interest table sample data (1 keyword each)
+-- Insert statement for guest_interest table sample data (1 keyword each - corporations only)
 INSERT INTO Guest_Interest (guest_id, interest_id) VALUES
-    (1, 1),   -- Guest User: Artificial Intelligence
-    (2, 2),   -- Diana Prince: Machine Learning
-    (3, 3),   -- Steve Rogers: Data Science
-    (4, 4);   -- Clark Kent: Cybersecurity
+    (1, 1),   -- Henrietta Public Library: Artificial Intelligence
+    (2, 2),   -- Amazon Inc.: Machine Learning
+    (3, 3),   -- Shield Corp.: Data Science
+    (4, 4),   -- Daily Planet: Cybersecurity
+    (5, 5);   -- Wayne Enterprises: Software Engineering
 
 -- Lookup Tables
 CREATE TABLE CollegeName_Lookup (
