@@ -108,7 +108,19 @@ public class Datalayer {
             this.accountType = type;
         }
     }
-
+    public static class College {
+        public String collegeId;
+        public String collegeName;
+        
+        public College(String id, String name) {
+            this.collegeId = id;
+            this.collegeName = name;
+        }
+        
+        public String toString() {
+            return collegeId + " - " + collegeName;
+        }
+    }
    public static class Faculty {
         public int    facultyId, accountId, building;
         public String fname, lname, email, officeNumber, cellPhone, slack, officeHours, calendarLink;
@@ -738,7 +750,19 @@ public class Datalayer {
     public List<Student> searchStudentsForPublic(String keyword) throws SQLException {
         return searchStudentsByInterest(keyword);
     }
-
+    public List<College> getAllColleges() {
+    List<College> list = new ArrayList<>();
+    String sql = "SELECT college_id, college_name FROM CollegeName_Lookup ORDER BY college_name";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            list.add(new College(rs.getString("college_id"), rs.getString("college_name")));
+        }
+    } catch (SQLException e) {
+        System.out.println("Error in getAllColleges: " + e.getMessage());
+    }
+    return list;
+}
     // HELPERS METHODS
     public int getOrCreateInterest(String word) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement("SELECT interest_id FROM Interest WHERE interest_word=?")) {

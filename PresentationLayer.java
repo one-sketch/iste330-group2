@@ -170,10 +170,11 @@ public class PresentationLayer {
 
 
     //  REGISTER 
-    private static void register() {
+   private static void register() {
     String[] types = {"Faculty", "Student", "Guest"};
     int tc = showVerticalMenu("Register", "Select account type:", types);
-    if (tc < 0) return;
+    if (tc < 0) return;  // User clicked Cancel on account type selection
+    
     JPanel p = new JPanel(new GridLayout(0, 1, 10, 10));
     p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     JTextField uf = new JTextField(15), fn = new JTextField(15), ln = new JTextField(15), em = new JTextField(15);
@@ -187,6 +188,8 @@ public class PresentationLayer {
     try {
         boolean ok = false;
         String title = "Register " + types[tc];
+        int result = -1;
+        
         if (tc == 0) {
             JTextField bld = new JTextField(15), off = new JTextField(15);
             JTextField officeHours = new JTextField(15);
@@ -197,7 +200,9 @@ public class PresentationLayer {
             p.add(new JLabel("Office Hours (e.g., MWF 9-5):")); p.add(officeHours);
             p.add(new JLabel("Calendar Link:")); p.add(calendarLink);
             
-            if (JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            // STORE the result before checking
+            result = JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
                 ok = db.registerFaculty(
                     uf.getText().trim(), 
                     new String(pf.getPassword()), 
@@ -213,7 +218,9 @@ public class PresentationLayer {
         } else if (tc == 1) {
             JTextField ph = new JTextField(15);
             p.add(new JLabel("Phone:")); p.add(ph);
-            if (JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            
+            result = JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
                 ok = db.registerStudent(
                     uf.getText().trim(), 
                     new String(pf.getPassword()), 
@@ -226,7 +233,9 @@ public class PresentationLayer {
         } else {
             JTextField co = new JTextField(15);
             p.add(new JLabel("Company:")); p.add(co);
-            if (JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            
+            result = JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
                 ok = db.registerGuest(
                     uf.getText().trim(), 
                     new String(pf.getPassword()), 
@@ -237,11 +246,18 @@ public class PresentationLayer {
                 );
             }
         }
-        JOptionPane.showMessageDialog(null, ok ? "Registered!" : "Username exists!", "Result",
-            ok ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
-    } catch (Exception e) { error("Error: " + e.getMessage()); }
+        
+        // Only show result message if user clicked OK (not Cancel)
+        if (result == JOptionPane.OK_OPTION) {
+            JOptionPane.showMessageDialog(null, ok ? "Registered!" : "Username exists!", "Result",
+                ok ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
+        }
+    } catch (NumberFormatException e) {
+        error("Building number must be a valid integer!");
+    } catch (Exception e) { 
+        error("Error: " + e.getMessage()); 
+    }
 }
-
 
     //  SHARED ABSTRACT VIEWS 
     private static void seeAllAbstracts() {
@@ -259,7 +275,24 @@ public class PresentationLayer {
         showScrollableText("All Abstracts", sb.toString());
     } catch (Exception e) { error("Error: " + e.getMessage()); }
 }
-
+    private static void showAllColleges() {
+    try {
+        var colleges = db.getAllColleges();
+        if (colleges.isEmpty()) { 
+            info("No colleges found in the system."); 
+            return; 
+        }
+        StringBuilder sb = new StringBuilder("RIT COLLEGES\n\n");
+        sb.append("=".repeat(50)).append("\n\n");
+        for (var c : colleges) {
+            sb.append(c.collegeId).append(" - ").append(c.collegeName).append("\n");
+        }
+        sb.append("\n").append("=".repeat(50));
+        showScrollableText("RIT Colleges", sb.toString());
+    } catch (Exception e) { 
+        error("Error: " + e.getMessage()); 
+    }
+}
 
     //  FACULTY MENU 
     private static void showFacultyMenu() {
@@ -267,7 +300,7 @@ public class PresentationLayer {
     String[] opts = {"See All Faculty Abstracts","View My Abstracts","View My Interests",
                      "Add Abstract","Update Abstract","Delete Abstract",
                      "Update Interest",  // This already has Add AND Delete options
-                     "Search Student By Name","Search by Interest/Abstract","Match by Interest","Logout"};
+                     "Search Student By Name", "Search by Interest/Abstract","Match by Interest","Logout"};
     while (true) {
         int c = showVerticalMenu("Faculty Menu", "Welcome " + faculty.getFullName(), opts);
         if      (c == 0)  seeAllAbstracts();
@@ -560,6 +593,7 @@ private static void deleteAllFacultyInterests(int facultyId) throws Exception {
         else if (c == 4) showAllInterests();
         else if (c == 5) studentSearchByKeyword();
         else if (c == 6) matchFacultyByInterest();
+
         else break;
     }
 }
@@ -632,7 +666,7 @@ private static void deleteAllStudentInterests(int studentId) throws Exception {
 
     //  GUEST MENU 
     private static void showGuestMenu() {
-        String[] opts = {"See All Faculty Abstracts","View My Interests","Add Interest","Delete Interest","Search by Interest/Abstract","Match Faculty by Interest","Match Student by Interest","Logout"};
+        String[] opts = {"See All Faculty Abstracts","View My Interests","Add Interest","Delete Interest","Search by Interest/Abstract","Match Faculty by Interest","Match Student by Interest","Show All Colleges","Logout"};
         while (true) {
             int c = showVerticalMenu("Guest Menu", "Welcome " + guest.getDisplayName(), opts);
             if      (c == 0) seeAllAbstracts();
@@ -642,6 +676,8 @@ private static void deleteAllStudentInterests(int studentId) throws Exception {
             else if (c == 4) guestSearchByKeyword();
             else if (c == 5) guestMatchFaculty();
             else if (c == 6) guestMatchStudent();
+            else if (c == 7) showAllColleges();  // NEW
+
             else break;
         }
     }
