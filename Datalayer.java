@@ -253,18 +253,25 @@ public class Datalayer {
     }
 
     /** Register a new Faculty (creates Account + Faculty row) */
-    public boolean registerFaculty(String username, String password, String fname, String lname,
-                                    String email, int building, String officeNumber) throws SQLException {
-        int accountId = registerAccount(username, password, "Faculty");
-        if (accountId == -1) return false;
-        String sql = "INSERT INTO Faculty (account_id, fname, lname, email, building, office_number) VALUES (?,?,?,?,?,?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, accountId); ps.setString(2, fname); ps.setString(3, lname);
-            ps.setString(4, email);  ps.setInt(5, building); ps.setString(6, officeNumber);
-            ps.executeUpdate();
+        public boolean registerFaculty(String username, String password, String fname, String lname,
+                                        String email, int building, String officeNumber, 
+                                        String officeHours, String calendarLink) throws SQLException {
+            int accountId = registerAccount(username, password, "Faculty");
+            if (accountId == -1) return false;
+            String sql = "INSERT INTO Faculty (account_id, fname, lname, email, building, office_number, office_hours, calendar_link) VALUES (?,?,?,?,?,?,?,?)";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, accountId); 
+                ps.setString(2, fname); 
+                ps.setString(3, lname);
+                ps.setString(4, email);  
+                ps.setInt(5, building); 
+                ps.setString(6, officeNumber);
+                ps.setString(7, officeHours);
+                ps.setString(8, calendarLink);
+                ps.executeUpdate();
+            }
+            return true;
         }
-        return true;
-    }
 
     /** Register a new Student */
     public boolean registerStudent(String username, String password, String fname, String lname,
@@ -295,16 +302,16 @@ public class Datalayer {
     }
     // PROFILE GETTERS
     public Faculty getFacultyByAccount(int accountId) throws SQLException {
-        String sql = "SELECT * FROM rit_collab.Faculty WHERE account_id = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)){
-            stmt.setInt(1,accountId);
-            ResultSet resultSet = stmt.executeQuery();
-
-            resultSet.next();
+    String sql = "SELECT * FROM Faculty WHERE account_id = ?";
+    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setInt(1, accountId);
+        ResultSet resultSet = stmt.executeQuery();
+        if (resultSet.next()) {
             return mapFaculty(resultSet);
         }
-        
+        return null;
     }
+}
 
     public Student getStudentByAccount(int accountId) throws SQLException {
         String sql = "SELECT * FROM rit_collab.Student WHERE account_id = ?";
@@ -698,7 +705,7 @@ public class Datalayer {
                 ps.setString(3, q);
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
-                    list.add(mapFaculty(rs));
+                    list.add(mapFaculty(rs));  // Now uses full mapFaculty with all fields
                 }
             } catch (SQLException e) {
                 System.out.println("Error in searchFacultyByKeyword: " + e.getMessage());
@@ -707,35 +714,21 @@ public class Datalayer {
         }
 
     // Student: auto-match faculty who share interests 
-         public List<Faculty> matchFacultyByStudentInterest(int studentId) {
-                List<Faculty> list = new ArrayList<>();
-                String sql = "SELECT DISTINCT f.faculty_id, f.account_id, f.fname, f.lname, f.email, " +
-                            "f.building, f.office_number " +
-                            "FROM Faculty f " +
-                            "JOIN Faculty_interest fi ON f.faculty_id = fi.faculty_id " +
-                            "JOIN Student_Interest si ON fi.interest_id = si.interest_id " +
-                            "WHERE si.student_id = ?";
-                try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                    ps.setInt(1, studentId);
-                    ResultSet rs = ps.executeQuery();
-                    while (rs.next()) {
-                        Faculty f = new Faculty(
-                            rs.getInt("faculty_id"),
-                            rs.getInt("account_id"),
-                            rs.getString("fname"),
-                            rs.getString("lname"),
-                            rs.getString("email"),
-                            rs.getInt("building"),
-                            rs.getString("office_number"),
-                            null, null, null, null
-                        );
-                        list.add(f);
-                    }
-                } catch (SQLException e) {
-                    System.out.println("Error in matchFacultyByStudentInterest: " + e.getMessage());
+        public List<Faculty> matchFacultyByStudentInterest(int studentId) throws SQLException {
+            List<Faculty> list = new ArrayList<>();
+            String sql = "SELECT DISTINCT f.* FROM Faculty f " +
+                        "JOIN Faculty_interest fi ON f.faculty_id = fi.faculty_id " +
+                        "JOIN Student_Interest si ON fi.interest_id = si.interest_id " +
+                        "WHERE si.student_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    list.add(mapFaculty(rs));  // Now uses full mapFaculty with all fields
                 }
-                return list;
             }
+            return list;
+        }
 
    /** Public/Guest: search both faculty and students by one keyword */
     public List<Faculty> searchFacultyForPublic(String keyword) throws SQLException {
@@ -769,12 +762,20 @@ public class Datalayer {
     }
 
     // ── Row mappers ──
-    private Faculty  mapFaculty(ResultSet rs) throws SQLException {
-        return new Faculty(rs.getInt("faculty_id"), rs.getInt("account_id"),
-            rs.getString("fname"), rs.getString("lname"), rs.getString("email"),
-            rs.getInt("building"), rs.getString("office_number"),
-            rs.getString("cell_phone"), rs.getString("slack"),
-            rs.getString("office_hours"), rs.getString("calendar_link"));
+    private Faculty mapFaculty(ResultSet rs) throws SQLException {
+        return new Faculty(
+            rs.getInt("faculty_id"),
+            rs.getInt("account_id"),
+            rs.getString("fname"),
+            rs.getString("lname"),
+            rs.getString("email"),
+            rs.getInt("building"),
+            rs.getString("office_number"),
+            rs.getString("cell_phone"),
+            rs.getString("slack"),
+            rs.getString("office_hours"),
+            rs.getString("calendar_link")
+        );
     }
     private Student  mapStudent(ResultSet rs) throws SQLException {
         return new Student(rs.getInt("student_id"), rs.getInt("account_id"),

@@ -170,46 +170,77 @@ public class PresentationLayer {
 
 
     //  REGISTER 
-
-
     private static void register() {
-        String[] types = {"Faculty", "Student", "Guest"};
-        int tc = showVerticalMenu("Register", "Select account type:", types);
-        if (tc < 0) return;
-        JPanel p = new JPanel(new GridLayout(0, 1, 10, 10));
-        p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        JTextField uf = new JTextField(15), fn = new JTextField(15), ln = new JTextField(15), em = new JTextField(15);
-        JPasswordField pf = new JPasswordField(15);
-        p.add(new JLabel("Username:")); p.add(uf);
-        p.add(new JLabel("Password:")); p.add(pf);
-        p.add(new JLabel("First Name:")); p.add(fn);
-        p.add(new JLabel("Last Name:")); p.add(ln);
-        p.add(new JLabel("Email:")); p.add(em);
+    String[] types = {"Faculty", "Student", "Guest"};
+    int tc = showVerticalMenu("Register", "Select account type:", types);
+    if (tc < 0) return;
+    JPanel p = new JPanel(new GridLayout(0, 1, 10, 10));
+    p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    JTextField uf = new JTextField(15), fn = new JTextField(15), ln = new JTextField(15), em = new JTextField(15);
+    JPasswordField pf = new JPasswordField(15);
+    p.add(new JLabel("Username:")); p.add(uf);
+    p.add(new JLabel("Password:")); p.add(pf);
+    p.add(new JLabel("First Name:")); p.add(fn);
+    p.add(new JLabel("Last Name:")); p.add(ln);
+    p.add(new JLabel("Email:")); p.add(em);
 
-
-        try {
-            boolean ok = false;
-            String title = "Register " + types[tc];
-            if (tc == 0) {
-                JTextField bld = new JTextField(15), off = new JTextField(15);
-                p.add(new JLabel("Building:")); p.add(bld); p.add(new JLabel("Office:")); p.add(off);
-                if (JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
-                    ok = db.registerFaculty(uf.getText().trim(), new String(pf.getPassword()), fn.getText().trim(), ln.getText().trim(), em.getText().trim(), Integer.parseInt(bld.getText().trim()), off.getText().trim());
-            } else if (tc == 1) {
-                JTextField ph = new JTextField(15);
-                p.add(new JLabel("Phone:")); p.add(ph);
-                if (JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
-                    ok = db.registerStudent(uf.getText().trim(), new String(pf.getPassword()), fn.getText().trim(), ln.getText().trim(), em.getText().trim(), ph.getText().trim());
-            } else {
-                JTextField co = new JTextField(15);
-                p.add(new JLabel("Company:")); p.add(co);
-                if (JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
-                    ok = db.registerGuest(uf.getText().trim(), new String(pf.getPassword()), fn.getText().trim(), ln.getText().trim(), co.getText().trim(), em.getText().trim());
+    try {
+        boolean ok = false;
+        String title = "Register " + types[tc];
+        if (tc == 0) {
+            JTextField bld = new JTextField(15), off = new JTextField(15);
+            JTextField officeHours = new JTextField(15);
+            JTextField calendarLink = new JTextField(15);
+            
+            p.add(new JLabel("Building:")); p.add(bld);
+            p.add(new JLabel("Office:")); p.add(off);
+            p.add(new JLabel("Office Hours (e.g., MWF 9-5):")); p.add(officeHours);
+            p.add(new JLabel("Calendar Link:")); p.add(calendarLink);
+            
+            if (JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                ok = db.registerFaculty(
+                    uf.getText().trim(), 
+                    new String(pf.getPassword()), 
+                    fn.getText().trim(), 
+                    ln.getText().trim(), 
+                    em.getText().trim(), 
+                    Integer.parseInt(bld.getText().trim()), 
+                    off.getText().trim(),
+                    officeHours.getText().trim(),
+                    calendarLink.getText().trim()
+                );
             }
-            JOptionPane.showMessageDialog(null, ok ? "Registered!" : "Username exists!", "Result",
-                ok ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
-        } catch (Exception e) { error("Error: " + e.getMessage()); }
-    }
+        } else if (tc == 1) {
+            JTextField ph = new JTextField(15);
+            p.add(new JLabel("Phone:")); p.add(ph);
+            if (JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                ok = db.registerStudent(
+                    uf.getText().trim(), 
+                    new String(pf.getPassword()), 
+                    fn.getText().trim(), 
+                    ln.getText().trim(), 
+                    em.getText().trim(), 
+                    ph.getText().trim()
+                );
+            }
+        } else {
+            JTextField co = new JTextField(15);
+            p.add(new JLabel("Company:")); p.add(co);
+            if (JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                ok = db.registerGuest(
+                    uf.getText().trim(), 
+                    new String(pf.getPassword()), 
+                    fn.getText().trim(), 
+                    ln.getText().trim(), 
+                    co.getText().trim(), 
+                    em.getText().trim()
+                );
+            }
+        }
+        JOptionPane.showMessageDialog(null, ok ? "Registered!" : "Username exists!", "Result",
+            ok ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
+    } catch (Exception e) { error("Error: " + e.getMessage()); }
+}
 
 
     //  SHARED ABSTRACT VIEWS 
@@ -715,19 +746,40 @@ private static void deleteAllGuestInterests(int guestId) throws Exception {
 
 
     //  DISPLAY HELPERS 
-
-
     private static void appendFaculty(StringBuilder sb, Datalayer.Faculty f) {
-        sb.append("Name: ").append(f.getFullName()).append("\nBuilding: ").append(f.building)
-          .append("\nOffice: ").append(f.officeNumber).append("\nEmail: ").append(f.email).append("\n");
+        sb.append("Name: ").append(f.getFullName()).append("\n");
+        sb.append("Building: ").append(f.building).append("\n");
+        sb.append("Office: ").append(f.officeNumber).append("\n");
+        sb.append("Email: ").append(f.email).append("\n");
+        
+        // Show office hours
+        if (f.officeHours != null && !f.officeHours.isEmpty()) {
+            sb.append("Office Hours: ").append(f.officeHours).append("\n");
+        }
+        
+        // Show calendar link
+        if (f.calendarLink != null && !f.calendarLink.isEmpty()) {
+            sb.append("Schedule Appointment: ").append(f.calendarLink).append("\n");
+        }
+        
+        // Show cell phone if available
+        if (f.cellPhone != null && !f.cellPhone.isEmpty()) {
+            sb.append("Cell: ").append(f.cellPhone).append("\n");
+        }
+        
+        // Show Slack if available
+        if (f.slack != null && !f.slack.isEmpty()) {
+            sb.append("Slack: @").append(f.slack).append("\n");
+        }
+        
         try {
             var interests = db.getFacultyInterests(f.facultyId);
-            if (!interests.isEmpty()) sb.append("Interests: ").append(joinInterests(interests, i -> i.interestWord)).append("\n");
+            if (!interests.isEmpty()) {
+                sb.append("Interests: ").append(joinInterests(interests, i -> i.interestWord)).append("\n");
+            }
         } catch (Exception ignored) {}
         sb.append("---\n");
     }
-
-
     private static void appendStudent(StringBuilder sb, Datalayer.Student s, boolean showInterests) {
         sb.append("Name: ").append(s.getFullName()).append("\nEmail: ").append(s.email).append("\nPhone: ").append(s.phone).append("\n");
         if (showInterests) try {
@@ -738,12 +790,33 @@ private static void deleteAllGuestInterests(int guestId) throws Exception {
     }
 
 
-    private static void showFacultyResults(String header, List<Datalayer.Faculty> list) {
-        if (list.isEmpty()) { info("No faculty found."); return; }
-        StringBuilder sb = new StringBuilder(header + "\n\n");
-        list.forEach(f -> appendFaculty(sb, f));
-        JOptionPane.showMessageDialog(null, sb.toString(), header, JOptionPane.INFORMATION_MESSAGE);
+   private static void showFacultyResults(String header, List<Datalayer.Faculty> list) {
+    if (list.isEmpty()) { info("No faculty found."); return; }
+    StringBuilder sb = new StringBuilder(header + "\n\n");
+    for (var f : list) {
+        sb.append("Name: ").append(f.getFullName()).append("\n");
+        sb.append("Building: ").append(f.building).append("\n");
+        sb.append("Office: ").append(f.officeNumber).append("\n");
+        sb.append("Email: ").append(f.email).append("\n");
+        
+        if (f.officeHours != null && !f.officeHours.isEmpty()) {
+            sb.append("Office Hours: ").append(f.officeHours).append("\n");
+        }
+        
+        if (f.calendarLink != null && !f.calendarLink.isEmpty()) {
+            sb.append("Schedule Appointment: ").append(f.calendarLink).append("\n");
+        }
+        
+        try {
+            var interests = db.getFacultyInterests(f.facultyId);
+            if (!interests.isEmpty()) {
+                sb.append("Interests: ").append(joinInterests(interests, i -> i.interestWord)).append("\n");
+            }
+        } catch (Exception ignored) {}
+        sb.append("---\n");
     }
+    JOptionPane.showMessageDialog(null, sb.toString(), header, JOptionPane.INFORMATION_MESSAGE);
+}
 
 
     private static void showStudentResults(String header, List<Datalayer.Student> list, boolean showInterests) {
