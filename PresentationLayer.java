@@ -199,11 +199,15 @@ public class PresentationLayer {
             JTextField bld = new JTextField(15), off = new JTextField(15);
             JTextField officeHours = new JTextField(15);
             JTextField calendarLink = new JTextField(15);
+            JTextField cellPhone = new JTextField(15);
+            JTextField slack_name = new JTextField(15);
             
             p.add(new JLabel("Building:")); p.add(bld);
             p.add(new JLabel("Office:")); p.add(off);
             p.add(new JLabel("Office Hours (e.g., MWF 9-5):")); p.add(officeHours);
             p.add(new JLabel("Calendar Link:")); p.add(calendarLink);
+            p.add(new JLabel("Cell Phone:")); p.add(cellPhone);
+            p.add(new JLabel("Slack:")); p.add(slack_name);
             
             // STORE the result before checking
             result = JOptionPane.showConfirmDialog(null, p, title, JOptionPane.OK_CANCEL_OPTION);
@@ -217,7 +221,9 @@ public class PresentationLayer {
                     Integer.parseInt(bld.getText().trim()), 
                     off.getText().trim(),
                     officeHours.getText().trim(),
-                    calendarLink.getText().trim()
+                    calendarLink.getText().trim(),
+                    cellPhone.getText().trim(),
+                    slack_name.getText().trim()
                 );
             }
         } else if (tc == 1) {

@@ -267,10 +267,10 @@ public class Datalayer {
     /** Register a new Faculty (creates Account + Faculty row) */
         public boolean registerFaculty(String username, String password, String fname, String lname,
                                         String email, int building, String officeNumber, 
-                                        String officeHours, String calendarLink) throws SQLException {
+                                        String officeHours, String calendarLink, String cellPhone, String slack_name) throws SQLException {
             int accountId = registerAccount(username, password, "Faculty");
             if (accountId == -1) return false;
-            String sql = "INSERT INTO Faculty (account_id, fname, lname, email, building, office_number, office_hours, calendar_link) VALUES (?,?,?,?,?,?,?,?)";
+            String sql = "INSERT INTO Faculty (account_id, fname, lname, email, building, office_number, office_hours, calendar_link, cell_phone, slack) VALUES (?,?,?,?,?,?,?,?,?,?)";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setInt(1, accountId); 
                 ps.setString(2, fname); 
@@ -280,6 +280,8 @@ public class Datalayer {
                 ps.setString(6, officeNumber);
                 ps.setString(7, officeHours);
                 ps.setString(8, calendarLink);
+                ps.setString(9, cellPhone);
+                ps.setString(10, slack_name);
                 ps.executeUpdate();
             }
             return true;
