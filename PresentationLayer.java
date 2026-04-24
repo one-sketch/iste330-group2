@@ -37,12 +37,17 @@ public class PresentationLayer {
         panel.add(new JLabel("DB Username:")); panel.add(userField);
         panel.add(new JLabel("DB Password:")); panel.add(passField);
 
+        String username = userField.getText().trim();
+        String password = new String(passField.getPassword());
+        if (password.isEmpty()){
+            password = "student";
+        }
 
         if (JOptionPane.showConfirmDialog(null, panel, "Database Connection",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) System.exit(0);
 
 
-        db = new Datalayer("rit_collab", userField.getText().trim(), new String(passField.getPassword()));
+        db = new Datalayer("rit_collab", username, password);
         if (!db.isConnected()) { error("Connection failed!"); System.exit(0); }
         info("Connected to database!");
         showMainMenu();
